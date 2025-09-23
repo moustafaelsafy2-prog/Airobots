@@ -1,62 +1,61 @@
-# /*! @file netlify.toml
-#  *  @version 1.0.0
-#  *  @updated 2025-09-23
-#  *  @owner Mustafa
-#  *  @notes: تهيئة Netlify للنشر (مجلد static، دوال Serverless، وتحويلات API)
-#  */
-
+# ===== Build =====
 [build]
-  # مجلد الملفات الثابتة
+  # مجلد ملفاتك الثابتة
   publish = "public"
-  # تثبيت الحزم أثناء البناء (لا يوجد bundling front-end)
-  command = "npm install"
+  # مسار وظائف Netlify
+  functions = "netlify/functions"
 
 [build.environment]
-  # توحيد إصدار Node في البناء (متوافق مع .nvmrc)
+  # تأكد من نسخة Node المتوافقة مع Functions و Blobs
   NODE_VERSION = "20"
 
+# ===== Functions =====
 [functions]
-  # مجلد دوال Netlify
   directory = "netlify/functions"
-  # استخدام esbuild لتجميع الدوال (يدعم ESM)
-  node_bundler = "esbuild"
-  # مهلة افتراضية جيدة (ثوانٍ) — اختياري
+  # اختياري: مهلة وتنفيذ أكبر لو أردت
+  # node_bundler = "esbuild"
   # external_node_modules = []
-  # included_files = []
 
-#######################################
-# Redirects (API → Serverless Functions)
-#######################################
-
-# Gemini Chat API
+# ===== Redirects (روابط مختصرة) =====
+# فتح صفحة الأدمن عبر /admin
 [[redirects]]
-  from = "/api/chat"
-  to = "/.netlify/functions/chat"
+  from = "/admin"
+  to   = "/admin.html"
   status = 200
 
-# Admin Login (JWT)
-[[redirects]]
-  from = "/api/admin/login"
-  to = "/.netlify/functions/admin-auth"
-  status = 200
-
-# Users CRUD & Search
-[[redirects]]
-  from = "/api/users"
-  to = "/.netlify/functions/users"
-  status = 200
-
-#######################################
-# (اختياري) Force HTTPS & Clean URLs
-#######################################
-
-# إجبار HTTPS (Netlify يفعّل تلقائياً عادةً، هذا للتأكيد على المواقع القديمة)
+# توجيه SPA إن لزم (إن أردت بقاء روابط داخلية تعمل على الريلود)
 # [[redirects]]
-#   from = "http://*"
-#   to = "https://:splat"
-#   status = 301
-#   force = true
+#   from = "/*"
+#   to   = "/index.html"
+#   status = 200
+#   force = false
 
-# إزالة .html من الروابط (Netlify يفعلها افتراضيًا، مذكورة للتوثيق)
-# [build.processing]
-#   skip_processing = true
+# ===== Headers (كاش و CORS مبسط للوظائف) =====
+# عدم تخزين HTML في الكاش
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# تمكين CORS لواجهة المستخدمين
+[[headers]]
+  for = "/.netlify/functions/users"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+# ملفات JSON (إن وجدت) لا تُخزَّن بقوة
+[[headers]]
+  for = "/users.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# ===== Security (اختياري جيد) =====
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
