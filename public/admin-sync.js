@@ -1,35 +1,37 @@
 // public/admin-sync.js
-// متوافق مع netlify/functions/users.js (expects: username, email, password, role)
-
+// متوافق مع الوظيفة الجديدة (POST يمنع التكرار، PUT يحدّث حسب id)
 (function () {
-  const API = '/.netlify/functions/users';
+  const API = "/.netlify/functions/users";
 
   let USERS = [];
   let EDIT_ID = null;
 
-  // DOM helpers
-  const $tbody = () => document.querySelector('#users-table tbody');
-  const $modal = () => document.getElementById('modal');
-  const $title = () => document.getElementById('modal-title');
+  // DOM
+  const $tbody = () => document.querySelector("#users-table tbody");
+  const $modal = () => document.getElementById("modal");
+  const $title = () => document.getElementById("modal-title");
+  const $u = () => document.getElementById("m_username");
+  const $e = () => document.getElementById("m_email");
+  const $p = () => document.getElementById("m_pass");
+  const $r = () => document.getElementById("m_role");
+  const $btnAdd = () => document.getElementById("add-user-btn");
+  const $btnSave = () => document.getElementById("save-user");
+  const $btnCancel = () => document.getElementById("cancel-user");
 
-  const $u = () => document.getElementById('m_username');
-  const $e = () => document.getElementById('m_email');
-  const $p = () => document.getElementById('m_pass');
-  const $r = () => document.getElementById('m_role');
+  // منع أي submit افتراضي محتمل
+  document.addEventListener("submit", (ev) => ev.preventDefault(), true);
 
-  const $btnAdd = () => document.getElementById('add-user-btn');
-  const $btnSave = () => document.getElementById('save-user');
-  const $btnCancel = () => document.getElementById('cancel-user');
-
-  async function api(method, path = '', body) {
+  async function api(method, path = "", body) {
     const res = await fetch(API + path, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,
-      cache: 'no-store'
+      cache: "no-store",
     });
     let data = {};
-    try { data = await res.json(); } catch (_) {}
+    try {
+      data = await res.json();
+    } catch (_) {}
     if (!res.ok || data.ok === false) {
       const msg = (data && (data.error || data.msg)) || `HTTP ${res.status}`;
       throw new Error(msg);
@@ -38,114 +40,137 @@
   }
 
   async function load() {
-    const { users } = await api('GET');
+    const { users } = await api("GET");
     USERS = Array.isArray(users) ? users : [];
-    localStorage.setItem('app_users', JSON.stringify(USERS));
+    localStorage.setItem("app_users", JSON.stringify(USERS));
     return USERS;
+  }
+
+  function atobSafe(s) {
+    try {
+      return atob(s || "");
+    } catch (_) {
+      return "";
+    }
   }
 
   function openAdd() {
     EDIT_ID = null;
-    $title().textContent = 'إضافة مستخدم';
-    $u().value = ''; $e().value = ''; $p().value = ''; $r().value = 'مستخدم';
-    $modal().classList.remove('hidden');
+    $title().textContent = "إضافة مستخدم";
+    $u().value = "";
+    $e().value = "";
+    $p().value = "";
+    $r().value = "مستخدم";
+    $modal().classList.remove("hidden");
     $u().focus();
   }
 
   function openEdit(u) {
     EDIT_ID = u.id;
-    $title().textContent = 'تعديل مستخدم';
-    $u().value = u.username || '';
-    $e().value = u.email || '';
-    // نعرض كلمة المرور كما هي إن كانت مخزنة نصًا، أو نتركها فارغة لو Base64
-    $p().value = (u.password && atobSafe(u.password)) || u.password || u.pass || '';
-    $r().value = u.role || 'مستخدم';
-    $modal().classList.remove('hidden');
+    $title().textContent = "تعديل مستخدم";
+    $u().value = u.username || "";
+    $e().value = u.email || "";
+    // لا نعرض كلمة مرور مفكوكة؛ اتركها فارغة ليحتفظ بالسابق إن لم تغيّرها
+    $p().value = "";
+    $r().value = u.role || "مستخدم";
+    $modal().classList.remove("hidden");
   }
 
-  function closeModal() { $modal().classList.add('hidden'); }
-
-  function atobSafe(s){ try { return atob(s || ''); } catch(_) { return ''; } }
+  function closeModal() {
+    $modal().classList.add("hidden");
+  }
 
   async function render() {
     await load();
     const body = $tbody();
-    body.innerHTML = '';
+    body.innerHTML = "";
 
     USERS.forEach((u, i) => {
-      const tr = document.createElement('tr');
+      const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${u.username || ''}</td>
-        <td>${u.email || ''}</td>
-        <td>${u.role || 'مستخدم'}</td>
+        <td>${u.username || ""}</td>
+        <td>${u.email || ""}</td>
+        <td>${u.role || "مستخدم"}</td>
         <td>
-          <button class="btn-edit" data-i="${i}">تعديل ✏️</button>
-          <button class="btn-del"  data-i="${i}">حذف 🗑️</button>
+          <button type="button" class="btn-edit" data-i="${i}">تعديل ✏️</button>
+          <button type="button" class="btn-del"  data-i="${i}">حذف 🗑️</button>
         </td>
       `;
       body.appendChild(tr);
     });
 
-    body.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
+    body.querySelectorAll(".btn-edit").forEach((btn) => {
+      btn.addEventListener("click", () => {
         const u = USERS[+btn.dataset.i];
         if (u) openEdit(u);
       });
     });
 
-    body.querySelectorAll('.btn-del').forEach(btn => {
-      btn.addEventListener('click', async () => {
+    body.querySelectorAll(".btn-del").forEach((btn) => {
+      btn.addEventListener("click", async () => {
         const u = USERS[+btn.dataset.i];
         if (!u) return;
-        if (!confirm('هل تريد حذف هذا المستخدم؟')) return;
-        await api('DELETE', '?id=' + encodeURIComponent(u.id));
+        if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
+        await api("DELETE", "?id=" + encodeURIComponent(u.id));
         await render();
       });
     });
   }
 
   function wire() {
-    // إضافة مستخدم
-    $btnAdd()?.addEventListener('click', openAdd);
+    $btnAdd()?.addEventListener("click", openAdd);
+    $btnCancel()?.addEventListener("click", closeModal);
 
-    // إلغاء
-    $btnCancel()?.addEventListener('click', closeModal);
+    // تأكد أن زر الحفظ لا يطلق إلا Listener واحد
+    $btnSave()?.replaceWith($btnSave().cloneNode(true));
+    const btn = document.getElementById("save-user");
 
-    // حفظ (إضافة/تعديل)
-    $btnSave()?.addEventListener('click', async () => {
-      const username = ($u().value || '').trim();
-      const email    = ($e().value || '').trim();
-      const password = $p().value || '';
-      const role     = ($r().value || 'مستخدم').trim();
+    btn.addEventListener(
+      "click",
+      async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-      if (!username || !password) {
-        alert('⚠️ اسم المستخدم وكلمة المرور إلزاميان');
-        return;
-      }
+        const username = ($u().value || "").trim();
+        const email = ($e().value || "").trim();
+        const password = $p().value || "";
+        const role = ($r().value || "مستخدم").trim();
 
-      try {
-        if (EDIT_ID) {
-          // تحديث: نرسل id + password (نصي) والوظيفة ستقوم بتخزينه Base64
-          await api('PUT', '', { id: EDIT_ID, username, email, password, role });
-        } else {
-          // إضافة: الحقول الصحيحة — لاحظ "password" وليس "pass"
-          await api('POST', '', { username, email, password, role });
+        if (!username) return alert("⚠️ اسم المستخدم إجباري");
+        if (!EDIT_ID && !password) return alert("⚠️ كلمة المرور مطلوبة عند الإضافة");
+
+        try {
+          if (EDIT_ID) {
+            await api("PUT", "", {
+              id: EDIT_ID,
+              username,
+              email,
+              role,
+              // إن كانت فارغة لا نرسلها ليبقى القديم
+              ...(password ? { password } : {}),
+            });
+          } else {
+            await api("POST", "", { username, email, role, password });
+          }
+          closeModal();
+          await render();
+        } catch (err) {
+          alert("تعذّر الحفظ: " + err.message);
         }
-        closeModal();
-        await render();
-      } catch (err) {
-        alert('تعذّر الحفظ: ' + err.message);
-      }
-    });
+      },
+      { once: false }
+    );
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     wire();
-    try { await render(); }
-    catch (e) {
+    try {
+      await render();
+    } catch (e) {
       console.error(e);
       const body = $tbody();
-      body.innerHTML = '<tr><td colspan="4">تعذر تحميل القائمة — تحقق من وظيفة users.js</td></tr>';
+      body.innerHTML =
+        '<tr><td colspan="4">تعذر تحميل القائمة — تحقّق من وظيفة users.js</td></tr>';
     }
   });
 })();
