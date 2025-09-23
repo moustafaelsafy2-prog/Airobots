@@ -1,0 +1,23 @@
+{
+  "name": "smart-assistants",
+  "version": "1.0.0",
+  "description": "منصة فريق العون الذكي — واجهة + دوال Netlify + Gemini API + لوحة تحكم الأدمن",
+  "main": "index.js",
+  "scripts": {
+    "start": "netlify dev",
+    "build": "echo 'No build step required'",
+    "serve": "npx http-server public -p 3000"
+  },
+  "author": "Mustafa",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.16.0",
+    "@netlify/functions": "^2.6.0",
+    "@netlify/blobs": "^6.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
