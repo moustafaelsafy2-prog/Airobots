@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "واجهة هجين: موقع static + Netlify Functions (Gemini) لشخصيات روبوتات فريق العون الذكي.",
   "scripts": {
     "dev": "netlify dev",
     "start": "netlify dev",
