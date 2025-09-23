@@ -1,37 +1,7 @@
-/*! @file public/_headers
- *  @version 1.0.0
- *  @updated 2025-09-23
- *  @owner Mustafa
- *  @notes: ترويسات أمان وكاش لـ Netlify (CSP، HSTS، XFO، إلخ)
- */
-
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), fullscreen=(self)
-  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  # سياسة أمن المحتوى (CSP)
-  # تسمح بمواردنا + Tailwind CDN + Google Fonts + صور من https + بيانات base64
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
-  # كاش افتراضي للمحتوى العام
-  Cache-Control: public, max-age=600
-)
-
-# صفحات HTML — لا تُخزَّن بقوة لضمان تحديث فوري
-/index.html
-  Cache-Control: no-store
-
-/admin.html
-  Cache-Control: no-store
-
-# ملفات الجافاسكربت — كاش طويل مع إعادة التحقق
-/app.js
-  Cache-Control: public, max-age=31536000, immutable
-
-/admin.js
-  Cache-Control: public, max-age=31536000, immutable
-
-# أي أصول مستقبلية (صور/خطوط) يمكن تمييزها حسب الامتداد لزيادة الكاش عند الحاجة:
-# /assets/*
-#   Cache-Control: public, max-age=31536000, immutable
+  Referrer-Policy: no-referrer-when-downgrade
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-XSS-Protection: 1; mode=block
+  Cache-Control: public, max-age=0, must-revalidate
