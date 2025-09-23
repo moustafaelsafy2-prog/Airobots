@@ -1,25 +1,27 @@
+# نشر واجهة static من مجلد public وتشغيل الدوال من netlify/functions
 [build]
-  publish = "public"
+  publish  = "public"
   functions = "netlify/functions"
+  # لا نحتاج بناء، فقط تثبيت الاعتمادات
+  command  = "echo 'No build step required'"
 
+[build.environment]
+  NODE_VERSION = "20"
+
+# توجيه مريح لاستدعاء الدوال عبر /api/*
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
+  force  = true
+
+# تفعيل مجمّع esbuild لدوال نتلايفاي (يدعم ESM)
 [functions]
   node_bundler = "esbuild"
+  included_files = ["netlify/functions/_utils.js"]
+
+# تهيئة وظيفة chat تحديدًا (اختياري)
+[functions."chat"]
   external_node_modules = ["@google/generative-ai"]
-
-[[redirects]]
-  from = "/api/chat"
-  to   = "/.netlify/functions/chat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/users"
-  to   = "/.netlify/functions/users"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/admin-auth"
-  to   = "/.netlify/functions/admin-auth"
-  status = 200
-  force = true
+  # يمكنك زيادة timeout إن أردت معالجة ملفات كبيرة
+  # timeout = 26
