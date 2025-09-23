@@ -8,38 +8,65 @@ export default async (req) => {
   try {
     let users = (await store.get("users.json", { type: "json" })) || [];
 
-    if (method === "GET") {
-      return json({ ok: true, users }, 200);
-    }
+    // helper
+    const findById = (id) => users.find((u) => String(u.id) === String(id));
+    const findByUsername = (username) =>
+      users.find((u) => (u.username || "").trim().toLowerCase() === (username || "").trim().toLowerCase());
+
+    const json = (data, status = 200) =>
+      new Response(JSON.stringify(data), {
+        status,
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      });
+
+    if (method === "GET") return json({ ok: true, users });
 
     if (method === "POST") {
       const body = await req.json();
-      if (!body.username || !body.password) return json({ ok:false, error:"البيانات ناقصة" }, 400);
-      const node = {
-        id: Date.now().toString(),
-        username: body.username,
-        email: body.email || '',
-        role: body.role || 'مستخدم',
-        password: btoa(body.password) // تخزين مبسّط
-      };
-      users.push(node);
+      const { username, password, email = "", role = "مستخدم" } = body || {};
+      if (!username || !password) return json({ ok: false, error: "البيانات ناقصة" }, 400);
+
+      // لو الاسم موجود بالفعل -> نحدّث بدل ما نضيف (منع التكرار)
+      const existing = findByUsername(username);
+      if (existing) {
+        existing.email = email;
+        existing.role = role;
+        existing.password = btoa(password); // Base64
+      } else {
+        users.push({
+          id: Date.now().toString(),
+          username,
+          email,
+          role,
+          password: btoa(password), // Base64
+        });
+      }
+
       await store.set("users.json", JSON.stringify(users));
       return json({ ok: true, users }, 201);
     }
 
     if (method === "PUT") {
       const body = await req.json();
-      if (!body.id) return json({ ok:false, error:"id مفقود" }, 400);
-      users = users.map(u => u.id === body.id
-        ? {
-            ...u,
-            username: body.username ?? u.username,
-            email:    body.email ?? u.email,
-            role:     body.role ?? u.role,
-            password: body.password ? btoa(body.password) : u.password
-          }
-        : u
-      );
+      const { id, username, email, role, password } = body || {};
+      if (!id) return json({ ok: false, error: "id مفقود" }, 400);
+
+      const node = findById(id);
+      if (!node) return json({ ok: false, error: "المستخدم غير موجود" }, 404);
+
+      // منع استخدام اسم مستخدم مكرر لشخص آخر
+      if (username) {
+        const dup = findByUsername(username);
+        if (dup && String(dup.id) !== String(id)) {
+          return json({ ok: false, error: "اسم المستخدم مستخدم بالفعل" }, 409);
+        }
+      }
+
+      if (username != null) node.username = username;
+      if (email != null) node.email = email;
+      if (role != null) node.role = role;
+      if (password) node.password = btoa(password);
+
       await store.set("users.json", JSON.stringify(users));
       return json({ ok: true, users }, 200);
     }
@@ -47,20 +74,16 @@ export default async (req) => {
     if (method === "DELETE") {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");
-      users = users.filter(u => u.id !== id);
+      users = users.filter((u) => String(u.id) !== String(id));
       await store.set("users.json", JSON.stringify(users));
       return json({ ok: true, users }, 200);
     }
 
-    return json({ ok:false, error:"Method Not Allowed" }, 405);
+    return json({ ok: false, error: "Method Not Allowed" }, 405);
   } catch (err) {
-    return json({ ok:false, error: err.message }, 500);
+    return new Response(JSON.stringify({ ok: false, error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
-
-function json(data, status=200){
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" }
-  });
-}
