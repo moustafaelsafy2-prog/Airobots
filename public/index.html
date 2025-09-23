@@ -1,825 +1,765 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فريق العون الذكي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: #0d1117;
-            color: #e5e7eb;
-            line-height: 1.6;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Tajawal', sans-serif;
-            margin-bottom: 1rem;
-        }
-        p { margin-bottom: 1.5rem; }
-        .text-gradient {
-            background: linear-gradient(90deg, #60a5fa, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-section {
-            background: url('https://images.unsplash.com/photo-1516117172878-fd2dc7981503?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') no-repeat center center/cover;
-            position: relative;
-            padding: 8rem 0;
-            overflow: hidden;
-        }
-        .hero-overlay {
-            background-color: rgba(13, 17, 23, 0.8);
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        }
-        .btn-gradient {
-            background: linear-gradient(90deg, #60a5fa, #8b5cf6);
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            position: relative; z-index: 10;
-        }
-        .btn-gradient:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
-        .card {
-            background-color: #161b22; border: 1px solid #30363d;
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4); background-color: #1f242b; }
-        .robot-card {
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            background-color: #161b22; padding: 1.5rem; border-radius: 1rem;
-            border: 1px solid #30363d; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease-in-out; position: relative; overflow: hidden; cursor: pointer;
-        }
-        .robot-card:hover { transform: translateY(-10px); }
-        .robot-circle {
-            width: 120px; height: 120px; border-radius: 50%;
-            background: linear-gradient(to right, #60a5fa, #8b5cf6);
-            display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden;
-        }
-        .robot-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease-in-out; }
-        .robot-card:hover .robot-image { transform: scale(1.1); }
-        .faq-item { background-color: #161b22; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #30363d; cursor: pointer; transition: background-color 0.3s ease; }
-        .faq-item:hover { background-color: #1f242b; }
-        .faq-question { display: flex; justify-content: space-between; align-items: center; }
-        .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; }
-        .faq-item.active .faq-answer { max-height: 200px; }
-        .faq-icon { transform: rotate(0deg); transition: transform 0.3s ease-in-out; }
-        .faq-item.active .faq-icon { transform: rotate(180deg); }
-        .discount-badge {
-            background: linear-gradient(90deg, #60a5fa, #8b5cf6, #ec4899);
-            color: #fff; padding: 0.5rem 1.5rem; border-radius: 9999px;
-            font-weight: bold; font-size: 1.125rem; position: absolute; top: -1.5rem; right: -1.5rem;
-            transform: rotate(45deg); transform-origin: bottom left; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .price-box { position: relative; display: inline-block; }
-        .icon-svg { width: 48px; height: 48px; color: #10b981; margin-bottom: 1rem; }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
-        .modal-content { background-color: #161b22; padding: 2rem; border: 1px solid #30363d; width: 90%; max-width: 400px; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
-        .close-btn:hover, .close-btn:focus { color: white; text-decoration: none; cursor: pointer; }
-        #chat-interface { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0d1117; z-index: 90; flex-direction: column; justify-content: space-between; padding: 1rem; }
-        #chat-header { background-color: #161b22; padding: 1rem; border-bottom: 1px solid #30363d; text-align: center; font-size: 1.5rem; font-weight: bold; }
-        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
-        .chat-message { padding: 0.75rem 1rem; border-radius: 0.75rem; max-width: 80%; }
-        .user-message { background-color: #60a5fa; color: #fff; align-self: flex-end; text-align: right; }
-        .ai-message { background-color: #8b5cf6; color: #fff; align-self: flex-start; text-align: left; }
-        #chat-input-container { display: flex; gap: 0.5rem; padding: 1rem 0; border-top: 1px solid #30363d; position: relative; }
-        #chat-input { flex-grow: 1; background-color: #161b22; border: 1px solid #30363d; padding: 0.75rem 1rem; border-radius: 9999px; color: #fff; }
-        #chat-send-btn { background-color: #60a5fa; color: #fff; padding: 0.75rem 1.5rem; border-radius: 9999px; font-weight: bold; cursor: pointer; transition: background-color 0.3s ease; }
-        #chat-send-btn:hover { background-color: #8b5cf6; }
-        #file-upload-icon { cursor: pointer; font-size: 1.5rem; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #8b5cf6; }
-        #main-dashboard { display: none; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>فريق العون الذكي</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    body{font-family:'Cairo',sans-serif;background:#0d1117;color:#e5e7eb;line-height:1.6}
+    h1,h2,h3,h4,h5,h6{font-family:'Tajawal',sans-serif;margin-bottom:1rem}
+    p{margin-bottom:1.5rem}
+    .text-gradient{background:linear-gradient(90deg,#60a5fa,#8b5cf6,#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-section{background:url('https://images.unsplash.com/photo-1516117172878-fd2dc7981503?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') no-repeat center center/cover;position:relative;padding:8rem 0;overflow:hidden}
+    .hero-overlay{background-color:rgba(13,17,23,.8);position:absolute;top:0;left:0;width:100%;height:100%}
+    .btn-gradient{background:linear-gradient(90deg,#60a5fa,#8b5cf6);transition:transform .3s ease-in-out,box-shadow .3s ease-in-out;box-shadow:0 4px 10px rgba(0,0,0,.2);position:relative;z-index:10}
+    .btn-gradient:hover{transform:translateY(-5px);box-shadow:0 10px 20px rgba(0,0,0,.3)}
+    .card{background-color:#161b22;border:1px solid #30363d;transition:transform .3s ease-in-out,box-shadow .3s ease-in-out;box-shadow:0 4px 8px rgba(0,0,0,.2)}
+    .card:hover{transform:translateY(-10px);box-shadow:0 15px 25px rgba(0,0,0,.4);background-color:#1f242b}
+    .robot-card{display:flex;flex-direction:column;align-items:center;text-align:center;background-color:#161b22;padding:1.5rem;border-radius:1rem;border:1px solid #30363d;box-shadow:0 4px 8px rgba(0,0,0,.2);transition:transform .3s ease-in-out;position:relative;overflow:hidden;cursor:pointer}
+    .robot-card:hover{transform:translateY(-10px)}
+    .robot-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(to right,#60a5fa,#8b5cf6);display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}
+    .robot-image{width:100%;height:100%;object-fit:cover;transition:transform .3s ease-in-out}
+    .robot-card:hover .robot-image{transform:scale(1.1)}
+    .faq-item{background-color:#161b22;padding:1.5rem;border-radius:.75rem;border:1px solid #30363d;cursor:pointer;transition:background-color .3s ease}
+    .faq-item:hover{background-color:#1f242b}
+    .faq-question{display:flex;justify-content:space-between;align-items:center}
+    .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease-in-out}
+    .faq-item.active .faq-answer{max-height:200px}
+    .faq-icon{transform:rotate(0deg);transition:transform .3s ease-in-out}
+    .faq-item.active .faq-icon{transform:rotate(180deg)}
+    .discount-badge{background:linear-gradient(90deg,#60a5fa,#8b5cf6,#ec4899);color:#fff;padding:.5rem 1.5rem;border-radius:9999px;font-weight:bold;font-size:1.125rem;position:absolute;top:-1.5rem;right:-1.5rem;transform:rotate(45deg);transform-origin:bottom left;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+    .price-box{position:relative;display:inline-block}
+    .icon-svg{width:48px;height:48px;color:#10b981;margin-bottom:1rem}
+    .modal{display:none;position:fixed;z-index:100;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.7);backdrop-filter:blur(5px);justify-content:center;align-items:center}
+    .modal-content{background-color:#161b22;padding:2rem;border:1px solid #30363d;width:90%;max-width:400px;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,.5);animation:fadeIn .3s ease-in-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+    .close-btn{color:#aaa;float:right;font-size:28px;font-weight:bold}
+    .close-btn:hover,.close-btn:focus{color:#fff;text-decoration:none;cursor:pointer}
+    #chat-interface{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:#0d1117;z-index:90;flex-direction:column;justify-content:space-between;padding:1rem}
+    #chat-header{background-color:#161b22;padding:1rem;border-bottom:1px solid #30363d;text-align:center;font-size:1.5rem;font-weight:bold}
+    #chat-messages{flex-grow:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:1rem}
+    .chat-message{padding:.75rem 1rem;border-radius:.75rem;max-width:80%}
+    .user-message{background-color:#60a5fa;color:#fff;align-self:flex-end;text-align:right}
+    .ai-message{background-color:#8b5cf6;color:#fff;align-self:flex-start;text-align:left}
+    #chat-input-container{display:flex;gap:.5rem;padding:1rem 0;border-top:1px solid #30363d;position:relative}
+    #chat-input{flex-grow:1;background-color:#161b22;border:1px solid #30363d;padding:.75rem 1rem;border-radius:9999px;color:#fff}
+    #chat-send-btn{background-color:#60a5fa;color:#fff;padding:.75rem 1.5rem;border-radius:9999px;font-weight:bold;cursor:pointer;transition:background-color .3s ease}
+    #chat-send-btn:hover{background-color:#8b5cf6}
+    #file-upload-icon{cursor:pointer;font-size:1.5rem;position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#8b5cf6}
+    #main-dashboard{display:none}
+  </style>
 </head>
 <body class="antialiased">
 
-    <!-- Header -->
-    <header class="p-6 relative z-20" id="main-header">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-white">فريق العون الذكي</h1>
-            <a href="#" id="login-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">تسجيل الدخول</a>
+  <!-- Header -->
+  <header class="p-6 relative z-20" id="main-header">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-white">فريق العون الذكي</h1>
+      <a href="#" id="login-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">تسجيل الدخول</a>
+    </div>
+  </header>
+
+  <!-- Main Landing Page Content -->
+  <main id="main-content">
+    <section class="hero-section text-center relative flex items-center justify-center">
+      <div class="hero-overlay"></div>
+      <div class="container mx-auto px-4 relative z-10 py-16">
+        <h2 class="text-5xl md:text-7xl font-extrabold leading-tight mb-4 text-white">
+          <span class="text-gradient">أنجز أكثر</span> مع فريق العون الذكي
+        </h2>
+        <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          نقدم لك فريقاً متخصصاً من 12 مساعداً، كل منهم جاهز لإنجاز مهمة محددة بدقة وكفاءة.
+        </p>
+        <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">ابدأ الآن</a>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-20 bg-gray-900 text-center">
+      <div class="container mx-auto px-4">
+        <h3 class="text-4xl font-bold mb-4 text-white">عرض حصري مدى الحياة</h3>
+        <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">احصل على وصول كامل وغير محدود إلى جميع المساعدين بسعر استثنائي يدفع لمرة واحدة.</p>
+        <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 max-w-lg mx-auto relative overflow-hidden">
+          <div class="discount-badge">خصم ٩٠%</div>
+          <div class="relative z-10 flex flex-col items-center">
+            <p class="text-5xl font-extrabold text-white mb-2">
+              <span class="text-2xl line-through text-gray-500">200$</span>
+              <span class="text-gradient text-6xl">39$</span>
+            </p>
+            <p class="text-gray-400 mb-6">للوصول مدى الحياة</p>
+            <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">اشترِ الآن</a>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <!-- What You Get -->
+    <section class="py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-4 text-white">ما الذي ستحصل عليه؟</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">مقابل السعر الذي تدفعه لمرة واحدة، ستحصل على مزايا لا حصر لها.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
+            <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <h4 class="text-2xl font-bold mb-2 text-white">جميع المساعدين الـ12</h4>
+            <p class="text-gray-400">وصول كامل إلى كل مساعد من مساعدي الذكاء الاصطناعي الـ12.</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
+            <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <h4 class="text-2xl font-bold mb-2 text-white">تحديثات مدى الحياة</h4>
+            <p class="text-gray-400">جميع التحديثات المستقبلية والمساعدين الجدد مجاناً.</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
+            <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
+            <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-20 bg-gray-900">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4ل font-bold mb-4 text-white">لماذا فريق العون الذكي؟</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">لأننا نؤمن بأن التخصص يولد الكفاءة. بدلاً من الاعتماد على أداة واحدة، نقدم لك فريقاً متكاملاً لإدارة كل جانب من جوانب عملك.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="text-5xl mb-4 text-gradient">✨</div>
+            <h4 class="text-2xl font-bold mb-2 text-white">تخصص لا مثيل له</h4>
+            <p class="text-gray-400">كل مساعد مصمم خصيصاً لإتقان مهمته، من التسويق إلى التحليل.</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="text-5xl mb-4 text-gradient">🚀</div>
+            <h4 class="text-2xl font-bold mb-2 text-white">إنجاز المهام بسرعة</h4>
+            <p class="text-gray-400">قلل الوقت المستغرق في المهام المتكررة وركز على الابتكار والنمو.</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="text-5xl mb-4 text-gradient">🔗</div>
+            <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
+            <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-4 text-white">كيف يعمل فريق العون الذكي؟</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">العملية بسيطة ومباشرة، مصممة لتوفير الوقت والجهد.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="flex flex-col items-center">
+            <div class="text-6xl text-gradient mb-4">1</div>
+            <h4 class="text-2xl font-bold mb-2 text-white">اختر المساعد المناسب</h4>
+            <p class="text-gray-400">تصفح قائمتنا واختر المساعد الذي يتناسب مع مهمتك الحالية.</p>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="text-6xl text-gradient mb-4">2</div>
+            <h4 class="text-2xl font-bold mb-2 text-white">أعطه مهمتك</h4>
+            <p class="text-gray-400">أدخل التفاصيل المطلوبة، وسيبدأ المساعد في العمل على الفور.</p>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="text-6xl text-gradient mb-4">3</div>
+            <h4 class="text-2xl font-bold mb-2 text-white">استلم النتائج</h4>
+            <p class="text-gray-400">سوف تحصل على نتائج دقيقة وعالية الجودة في وقت قياسي.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Helpers -->
+    <section class="py-20 bg-gray-900">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-4 text-white">تعرف على فريقك</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">12 مساعداً ذكياً، كل منهم يمثل خبرة محددة لمساعدتك على التفوق في مجالك.</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933930_1280.jpg" alt="أيقونة روبوت للتسويق الرقمي" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">ألفا (Alfa)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد التسويق الرقمي:</b> يحلل بيانات السوق، وينشئ محتوى تسويقيًا جذابًا، ويدير حملات الإعلانات لزيادة المبيعات.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/21/16/24/ai-generated-7942231_1280.jpg" alt="أيقونة روبوت للمبيعات" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">فيزي (Vizi)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد المبيعات:</b> يتابع العملاء المحتملين، ويجهز العروض التقديمية، ويتتبع أداء المبيعات لزيادة الإيرادات.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933931_1280.jpg" alt="أيقونة روبوت لإدارة الميزانية" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">كورتكس (Cortex)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد مالي:</b> يراقب النفقات، ويدير الميزانيات، ويقدم تقارير مالية دقيقة لمراقبة صحة الشركة المالية.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933932_1280.jpg" alt="أيقونة روبوت للموارد البشرية" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">ليكس (Lex)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد خدمة العملاء:</b> يجيب على استفسارات العملاء، ويحل المشاكل بسرعة، ويضمن رضا العميل من خلال تجربة ممتازة.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933933_1280.jpg" alt="أيقونة روبوت لإدارة العمليات" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">أوكتو (Octo)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد العمليات:</b> يحسن سير العمل، ويقلل من المهام الروتينية، مما يزيد من إنتاجية الفريق وكفاءة العمل.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933934_1280.jpg" alt="أيقونة روبوت لإدارة المخاطر" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">مينا (Mina)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد تحليل البيانات:</b> يحلل بيانات العملاء والمبيعات، ويقدم رؤى عميقة تساعد في اتخاذ قرارات عمل استراتيجية.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933935_1280.jpg" alt="أيقونة روبوت لإدارة المشاريع" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">بولت (Bolt)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد إدارة المشاريع:</b> يخطط للمشاريع، ويتتبع التقدم، ويضمن تسليم المهام في الوقت المحدد دون تجاوز الميزانية.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933936_1280.jpg" alt="أيقونة روبوت لإدارة الأصول" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">ريكس (Rex)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد الإدارة المالية:</b> يساعد في إعداد الميزانيات، ويقدم تحليلات مالية دقيقة، ويراقب التدفق النقدي لتحقيق الاستقرار المالي.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933937_1280.jpg" alt="أيقونة روبوت لإدارة الجودة" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">بادي (Buddy)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد العلاقات العامة:</b> يدير سمعة الشركة، ويتفاعل مع الجمهور على وسائل التواصل الاجتماعي، وينشر البيانات الصحفية.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933938_1280.jpg" alt="أيقونة روبوت لإدارة علاقات العملاء" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">روفر (Rover)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد علاقات العملاء:</b> يتتبع بيانات العملاء، ويحلل سلوكهم الشرائي، ويقدم خططًا لتعزيز ولاء العملاء.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933939_1280.jpg" alt="أيقونة روبوت لإدارة الحوكمة" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">فالور (Valor)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد التجارة الإلكترونية:</b> يدير المخزون، ويحلل بيانات المبيعات عبر الإنترنت، ويساعد في تحسين تجربة التسوق الرقمية.</p>
+          </div>
+          <div class="robot-card p-4">
+            <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933940_1280.jpg" alt="أيقونة روبوت لإدارة الابتكار" class="robot-image"/></div>
+            <h4 class="font-bold mt-4 text-white">زينيث (Zenith)</h4>
+            <p class="text-sm text-gray-400 mt-2"><b>مساعد الابتكار:</b> يجمع الأفكار الجديدة من السوق، ويحلل اتجاهات المنافسين، ويقدم تقارير لمساعدتك على تطوير منتجات وخدمات مبتكرة.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-4 text-white">ماذا يقول عملاؤنا؟</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">قصص نجاح حقيقية من أشخاص وشركات حول العالم.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <p class="text-lg text-gray-300 mb-4">"فريق العون الذكي غير قواعد اللعبة بالنسبة لشركتنا. لقد أصبحنا أكثر كفاءة وإنتاجية."</p>
+            <p class="font-bold text-white">- أحمد، رائد أعمال</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <p class="text-lg text-gray-300 mb-4">"أداة رائعة! مساعد التسويق عبر البريد الإلكتروني وفر لي ساعات من العمل وساعدني على زيادة المبيعات."</p>
+            <p class="font-bold text-white">- سارة، مديرة تسويق</p>
+          </div>
+          <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <p class="text-lg text-gray-300 mb-4">"لم أعد قلقاً بشأن تحليل البيانات المعقدة. مساعد التحليل يقوم بكل العمل الصعب من أجلي."</p>
+            <p class="font-bold text-white">- خالد، محلل بيانات</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-20 bg-gray-900">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-4 text-white">الأسئلة الشائعة</h3>
+        <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">إجابات على أكثر الأسئلة التي ترد إلينا.</p>
+        <div class="space-y-4 max-w-3xl mx-auto">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h5 class="font-bold text-white">هل يمكنني استخدام أكثر من مساعد في نفس الوقت؟</h5>
+              <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="faq-answer mt-4 text-gray-400">
+              <p>نعم، يمكنك استخدام أي عدد من المساعدين في نفس الوقت. كل مساعد يعمل بشكل مستقل لإنجاز مهمته المحددة.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h5 class="font-bold text-white">هل تتوفر نسخة تجريبية مجانية؟</h5>
+              <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="faq-answer mt-4 text-gray-400">
+              <p>لا، الأداة تباع بسعر حصري يدفع لمرة واحدة للحصول على وصول مدى الحياة.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question">
+              <h5 class="font-bold text-white">ما هي تكلفة الاشتراك؟</h5>
+              <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="faq-answer mt-4 text-gray-400">
+              <p>الأداة ليست قائمة على الاشتراك. يمكنك الحصول عليها بسعر استثنائي لمرة واحدة فقط.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 bg-gray-800 text-center">
+      <div class="container mx-auto px-4">
+        <h3 class="text-4xl font-bold text-white mb-4">جاهز لتحقيق المزيد؟</h3>
+        <p class="text-xl text-gray-400 mb-8">انضم إلى فريق العون الذكي وابدأ في إنجاز مهامك بكفاءة لم يسبق لها مثيل.</p>
+        <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">اشترِ الآن</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-center py-6">
+    <p class="text-gray-500">&copy; 2023 فريق العون الذكي. جميع الحقوق محفوظة.</p>
+  </footer>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h4 class="text-2xl font-bold text-white mb-6 text-center">تسجيل الدخول</h4>
+      <div class="mb-4">
+        <label for="username" class="block text-gray-400 mb-2">اسم المستخدم</label>
+        <input type="text" id="username" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-purple-500" placeholder="أدخل اسم المستخدم"/>
+      </div>
+      <div class="mb-6">
+        <label for="password" class="block text-gray-400 mb-2">كلمة المرور</label>
+        <input type="password" id="password" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-purple-500" placeholder="أدخل كلمة المرور"/>
+      </div>
+      <button id="submit-login" class="btn-gradient w-full text-white py-3 rounded-full font-bold">دخول</button>
+      <p id="login-message" class="mt-4 text-center font-bold"></p>
+    </div>
+  </div>
+
+  <!-- Setup Chat Interface -->
+  <div id="setup-chat-interface" class="hidden fixed top-0 left-0 w-full h-full bg-[#0d1117] z-[90] flex-col justify-between p-4">
+    <div class="flex-grow overflow-y-auto p-4 flex flex-col gap-4" id="setup-chat-messages"></div>
+    <div class="flex gap-2 p-2 border-t border-gray-700">
+      <input type="text" id="setup-chat-input" placeholder="اكتب ردك هنا..." class="flex-grow p-3 rounded-full bg-gray-800 border border-gray-700 text-white focus:outline-none"/>
+      <button id="setup-chat-send-btn" class="bg-blue-600 text-white p-3 rounded-full font-bold">إرسال</button>
+    </div>
+  </div>
+
+  <!-- Dashboard & Robot Selection -->
+  <div id="dashboard-container" class="hidden">
+    <header class="p-6 relative z-20">
+      <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-white">لوحة التحكم</h1>
+        <div class="flex space-x-4 space-x-reverse">
+          <a href="#" id="profile-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">الملف الشخصي</a>
+          <a href="#" id="logout-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">تسجيل الخروج</a>
+        </div>
+      </div>
     </header>
 
-    <!-- Main Landing Page Content -->
-    <main id="main-content">
-        <section class="hero-section text-center relative flex items-center justify-center">
-            <div class="hero-overlay"></div>
-            <div class="container mx-auto px-4 relative z-10 py-16">
-                <h2 class="text-5xl md:text-7xl font-extrabold leading-tight mb-4 text-white">
-                    <span class="text-gradient">أنجز أكثر</span> مع فريق العون الذكي
-                </h2>
-                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-                    نقدم لك فريقاً متخصصاً من 12 مساعداً، كل منهم جاهز لإنجاز مهمة محددة بدقة وكفاءة.
-                </p>
-                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">
-                    ابدأ الآن
-                </a>
-            </div>
-        </section>
-
-        <!-- Pricing Section -->
-        <section class="py-20 bg-gray-900 text-center">
-            <div class="container mx-auto px-4">
-                <h3 class="text-4xl font-bold mb-4 text-white">عرض حصري مدى الحياة</h3>
-                <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-                    احصل على وصول كامل وغير محدود إلى جميع المساعدين بسعر استثنائي يدفع لمرة واحدة.
-                </p>
-                <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 max-w-lg mx-auto relative overflow-hidden">
-                    <div class="discount-badge">خصم ٩٠%</div>
-                    <div class="relative z-10 flex flex-col items-center">
-                        <p class="text-5xl font-extrabold text-white mb-2">
-                            <span class="text-2xl line-through text-gray-500">200$</span>
-                            <span class="text-gradient text-6xl">39$</span>
-                        </p>
-                        <p class="text-gray-400 mb-6">للوصول مدى الحياة</p>
-                        <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">
-                            اشترِ الآن
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- What You Get Section -->
-        <section class="py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">ما الذي ستحصل عليه؟</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">
-                    مقابل السعر الذي تدفعه لمرة واحدة، ستحصل على مزايا لا حصر لها.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
-                        <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        <h4 class="text-2xl font-bold mb-2 text-white">جميع المساعدين الـ12</h4>
-                        <p class="text-gray-400">وصول كامل إلى كل مساعد من مساعدي الذكاء الاصطناعي الـ12.</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
-                        <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        <h4 class="text-2xl font-bold mb-2 text-white">تحديثات مدى الحياة</h4>
-                        <p class="text-gray-400">جميع التحديثات المستقبلية والمساعدين الجدد مجاناً.</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
-                        <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
-                        <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="py-20 bg-gray-900">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4ل font-bold mb-4 text-white">لماذا فريق العون الذكي؟</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-                    لأننا نؤمن بأن التخصص يولد الكفاءة. بدلاً من الاعتماد على أداة واحدة، نقدم لك فريقاً متكاملاً لإدارة كل جانب من جوانب عملك.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                        <div class="text-5xl mb-4 text-gradient">✨</div>
-                        <h4 class="text-2xl font-bold mb-2 text-white">تخصص لا مثيل له</h4>
-                        <p class="text-gray-400">كل مساعد مصمم خصيصاً لإتقان مهمته، من التسويق إلى التحليل.</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                        <div class="text-5xl mb-4 text-gradient">🚀</div>
-                        <h4 class="text-2xl font-bold mb-2 text-white">إنجاز المهام بسرعة</h4>
-                        <p class="text-gray-400">قلل الوقت المستغرق في المهام المتكررة وركز على الابتكار والنمو.</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                        <div class="text-5xl mb-4 text-gradient">🔗</div>
-                        <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
-                        <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- How It Works Section -->
-        <section class="py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">كيف يعمل فريق العون الذكي؟</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">العملية بسيطة ومباشرة، مصممة لتوفير الوقت والجهد.</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="flex flex-col items-center">
-                        <div class="text-6xl text-gradient mb-4">1</div>
-                        <h4 class="text-2xl font-bold mb-2 text-white">اختر المساعد المناسب</h4>
-                        <p class="text-gray-400">تصفح قائمتنا واختر المساعد الذي يتناسب مع مهمتك الحالية.</p>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="text-6xl text-gradient mb-4">2</div>
-                        <h4 class="text-2xl font-bold mb-2 text-white">أعطه مهمتك</h4>
-                        <p class="text-gray-400">أدخل التفاصيل المطلوبة، وسيبدأ المساعد في العمل على الفور.</p>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="text-6xl text-gradient mb-4">3</div>
-                        <h4 class="text-2xl font-bold mb-2 text-white">استلم النتائج</h4>
-                        <p class="text-gray-400">سوف تحصل على نتائج دقيقة وعالية الجودة في وقت قياسي.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- AI Helpers Section -->
-        <section class="py-20 bg-gray-900">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">تعرف على فريقك</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">12 مساعداً ذكياً، كل منهم يمثل خبرة محددة لمساعدتك على التفوق في مجالك.</p>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933930_1280.jpg" alt="أيقونة روبوت للتسويق الرقمي" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">ألفا (Alfa)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد التسويق الرقمي:</b> يحلل بيانات السوق، وينشئ محتوى تسويقيًا جذابًا، ويدير حملات الإعلانات لزيادة المبيعات.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/21/16/24/ai-generated-7942231_1280.jpg" alt="أيقونة روبوت للمبيعات" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">فيزي (Vizi)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد المبيعات:</b> يتابع العملاء المحتملين، ويجهز العروض التقديمية، ويتتبع أداء المبيعات لزيادة الإيرادات.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933931_1280.jpg" alt="أيقونة روبوت لإدارة الميزانية" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">كورتكس (Cortex)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد مالي:</b> يراقب النفقات، ويدير الميزانيات، ويقدم تقارير مالية دقيقة لمراقبة صحة الشركة المالية.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933932_1280.jpg" alt="أيقونة روبوت للموارد البشرية" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">ليكس (Lex)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد خدمة العملاء:</b> يجيب على استفسارات العملاء، ويحل المشاكل بسرعة، ويضمن رضا العميل من خلال تجربة ممتازة.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933933_1280.jpg" alt="أيقونة روبوت لإدارة العمليات" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">أوكتو (Octo)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد العمليات:</b> يحسن سير العمل، ويقلل من المهام الروتينية، مما يزيد من إنتاجية الفريق وكفاءة العمل.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933934_1280.jpg" alt="أيقونة روبوت لإدارة المخاطر" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">مينا (Mina)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد تحليل البيانات:</b> يحلل بيانات العملاء والمبيعات، ويقدم رؤى عميقة تساعد في اتخاذ قرارات عمل استراتيجية.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933935_1280.jpg" alt="أيقونة روبوت لإدارة المشاريع" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">بولت (Bolt)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد إدارة المشاريع:</b> يخطط للمشاريع، ويتتبع التقدم، ويضمن تسليم المهام في الوقت المحدد دون تجاوز الميزانية.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933936_1280.jpg" alt="أيقونة روبوت لإدارة الأصول" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">ريكس (Rex)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد الإدارة المالية:</b> يساعد في إعداد الميزانيات، ويقدم تحليلات مالية دقيقة، ويراقب التدفق النقدي لتحقيق الاستقرار المالي.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933937_1280.jpg" alt="أيقونة روبوت لإدارة الجودة" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">بادي (Buddy)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد العلاقات العامة:</b> يدير سمعة الشركة، ويتفاعل مع الجمهور على وسائل التواصل الاجتماعي، وينشر البيانات الصحفية.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933938_1280.jpg" alt="أيقونة روبوت لإدارة علاقات العملاء" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">روفر (Rover)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد علاقات العملاء:</b> يتتبع بيانات العملاء، ويحلل سلوكهم الشرائي، ويقدم خططًا لتعزيز ولاء العملاء.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933939_1280.jpg" alt="أيقونة روبوت لإدارة الحوكمة" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">فالور (Valor)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد التجارة الإلكترونية:</b> يدير المخزون، ويحلل بيانات المبيعات عبر الإنترنت، ويساعد في تحسين تجربة التسوق الرقمية.</p>
-                    </div>
-                    <div class="robot-card p-4">
-                        <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933940_1280.jpg" alt="أيقونة روبوت لإدارة الابتكار" class="robot-image"/></div>
-                        <h4 class="font-bold mt-4 text-white">زينيث (Zenith)</h4>
-                        <p class="text-sm text-gray-400 mt-2"><b>مساعد الابتكار:</b> يجمع الأفكار الجديدة من السوق، ويحلل اتجاهات المنافسين، ويقدم تقارير لمساعدتك على تطوير منتجات وخدمات مبتكرة.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Testimonials Section -->
-        <section class="py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">ماذا يقول عملاؤنا؟</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">قصص نجاح حقيقية من أشخاص وشركات حول العالم.</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
-                        <p class="text-lg text-gray-300 mb-4">"فريق العون الذكي غير قواعد اللعبة بالنسبة لشركتنا. لقد أصبحنا أكثر كفاءة وإنتاجية."</p>
-                        <p class="font-bold text-white">- أحمد، رائد أعمال</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
-                        <p class="text-lg text-gray-300 mb-4">"أداة رائعة! مساعد التسويق عبر البريد الإلكتروني وفر لي ساعات من العمل وساعدني على زيادة المبيعات."</p>
-                        <p class="font-bold text-white">- سارة، مديرة تسويق</p>
-                    </div>
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
-                        <p class="text-lg text-gray-300 mb-4">"لم أعد قلقاً بشأن تحليل البيانات المعقدة. مساعد التحليل يقوم بكل العمل الصعب من أجلي."</p>
-                        <p class="font-bold text-white">- خالد، محلل بيانات</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section class="py-20 bg-gray-900">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">الأسئلة الشائعة</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">إجابات على أكثر الأسئلة التي ترد إلينا.</p>
-                <div class="space-y-4 max-w-3xl mx-auto">
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h5 class="font-bold text-white">هل يمكنني استخدام أكثر من مساعد في نفس الوقت؟</h5>
-                            <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        <div class="faq-answer mt-4 text-gray-400">
-                            <p>نعم، يمكنك استخدام أي عدد من المساعدين في نفس الوقت. كل مساعد يعمل بشكل مستقل لإنجاز مهمته المحددة.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h5 class="font-bold text-white">هل تتوفر نسخة تجريبية مجانية؟</h5>
-                            <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        <div class="faq-answer mt-4 text-gray-400">
-                            <p>لا، الأداة تباع بسعر حصري يدفع لمرة واحدة للحصول على وصول مدى الحياة.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h5 class="font-bold text-white">ما هي تكلفة الاشتراك؟</h5>
-                            <svg class="faq-icon w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        <div class="faq-answer mt-4 text-gray-400">
-                            <p>الأداة ليست قائمة على الاشتراك. يمكنك الحصول عليها بسعر استثنائي لمرة واحدة فقط.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Call to Action Section -->
-        <section class="py-20 bg-gray-800 text-center">
-            <div class="container mx-auto px-4">
-                <h3 class="text-4xl font-bold text-white mb-4">جاهز لتحقيق المزيد؟</h3>
-                <p class="text-xl text-gray-400 mb-8">انضم إلى فريق العون الذكي وابدأ في إنجاز مهامك بكفاءة لم يسبق لها مثيل.</p>
-                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">اشترِ الآن</a>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-center py-6">
-        <p class="text-gray-500">&copy; 2023 فريق العون الذكي. جميع الحقوق محفوظة.</p>
-    </footer>
-
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h4 class="text-2xl font-bold text-white mb-6 text-center">تسجيل الدخول</h4>
-            <div class="mb-4">
-                <label for="username" class="block text-gray-400 mb-2">اسم المستخدم</label>
-                <input type="text" id="username" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-purple-500" placeholder="أدخل اسم المستخدم">
-            </div>
-            <div class="mb-6">
-                <label for="password" class="block text-gray-400 mb-2">كلمة المرور</label>
-                <input type="password" id="password" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-purple-500" placeholder="أدخل كلمة المرور">
-            </div>
-            <button id="submit-login" class="btn-gradient w-full text-white py-3 rounded-full font-bold">دخول</button>
-            <p id="login-message" class="mt-4 text-center font-bold"></p>
+      <section class="py-12">
+        <div class="container mx-auto px-4 text-center">
+          <h3 class="text-4xl font-bold mb-4 text-white">اختر مساعدك</h3>
+          <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">ابدأ محادثة مع أي مساعد لبدء العمل على مهامك.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6" id="robot-list"></div>
         </div>
+      </section>
+
+      <!-- Previous Chats -->
+      <section class="py-12 bg-gray-900">
+        <div class="container mx-auto px-4">
+          <h3 class="text-4xl font-bold mb-6 text-white text-center">محادثاتك السابقة</h3>
+          <div id="conversations-list" class="space-y-4"></div>
+        </div>
+      </section>
+  </div>
+
+  <!-- Profile Section -->
+  <div id="profile-section" class="hidden fixed top-0 left-0 w-full h-full bg-[#0d1117] z-[90] flex-col p-4 overflow-y-auto">
+    <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+      <button id="back-to-dashboard-from-profile-btn" class="text-white text-2xl">&larr;</button>
+      <h4 class="text-xl font-bold text-white flex-grow text-center">الملف الشخصي</h4>
+      <span class="w-6 h-6"></span>
     </div>
+    <div class="container mx-auto px-4 py-8">
+      <h3 class="text-3xl font-bold text-white mb-6">بياناتي الأساسية</h3>
+      <div id="basic-data" class="bg-gray-800 p-6 rounded-lg mb-8 border border-gray-700"></div>
 
-    <!-- Setup Chat Interface -->
-    <div id="setup-chat-interface" class="hidden fixed top-0 left-0 w-full ه-full bg-[#0d1117] z-[90] flex-col justify-between p-4">
-        <div class="flex-grow overflow-y-auto p-4 flex flex-col gap-4" id="setup-chat-messages"></div>
-        <div class="flex gap-2 p-2 border-t border-gray-700">
-            <input type="text" id="setup-chat-input" placeholder="اكتب ردك هنا..." class="flex-grow p-3 rounded-full bg-gray-800 border border-gray-700 text-white focus:outline-none">
-            <button id="setup-chat-send-btn" class="bg-blue-600 text-white p-3 rounded-full font-bold">إرسال</button>
-        </div>
+      <h3 class="text-3xl font-bold text-white mb-6">المعلومات التي تعلمها الذكاء الاصطناعي</h3>
+      <div id="learned-data" class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+        <p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>
+      </div>
     </div>
-    
-    <!-- Dashboard & Robot Selection -->
-    <div id="dashboard-container" class="hidden">
-        <header class="p-6 relative z-20">
-            <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-white">لوحة التحكم</h1>
-                <div class="flex space-x-4 space-x-reverse">
-                    <a href="#" id="profile-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">الملف الشخصي</a>
-                    <a href="#" id="logout-btn" class="btn-gradient text-white px-6 py-2 rounded-full font-semibold">تسجيل الخروج</a>
-                </div>
-            </div>
-        </header>
+  </div>
 
-        <section class="py-12">
-            <div class="container mx-auto px-4 text-center">
-                <h3 class="text-4xl font-bold mb-4 text-white">اختر مساعدك</h3>
-                <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">ابدأ محادثة مع أي مساعد لبدء العمل على مهامك.</p>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6" id="robot-list"></div>
-            </div>
-        </section>
-
-        <!-- Previous Chats Section -->
-        <section class="py-12 bg-gray-900">
-            <div class="container mx-auto px-4">
-                <h3 class="text-4xl font-bold mb-6 text-white text-center">محادثاتك السابقة</h3>
-                <div id="conversations-list" class="space-y-4"></div>
-            </div>
-        </section>
+  <!-- Robot Chat Interface -->
+  <div id="robot-chat-interface" class="hidden fixed top-0 left-0 w-full h-full bg-[#0d1117] z-[90] flex-col justify-between p-4">
+    <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+      <button id="back-to-dashboard-btn" class="text-white text-2xl">&larr;</button>
+      <h4 id="robot-chat-header" class="text-xl font-bold text-white flex-grow text-center"></h4>
+      <span class="w-6 h-6"></span>
     </div>
-
-    <!-- Profile Section -->
-    <div id="profile-section" class="hidden fixed top-0 left-0 w-full ه-full bg-[#0d1117] z-[90] flex-col p-4 overflow-y-auto">
-        <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
-            <button id="back-to-dashboard-from-profile-btn" class="text-white text-2xl">&larr;</button>
-            <h4 class="text-xl font-bold text-white flex-grow text-center">الملف الشخصي</h4>
-            <span class="w-6 h-6"></span>
-        </div>
-        <div class="container mx-auto px-4 py-8">
-            <h3 class="text-3xl font-bold text-white mb-6">بياناتي الأساسية</h3>
-            <div id="basic-data" class="bg-gray-800 p-6 rounded-lg mb-8 border border-gray-700"></div>
-
-            <h3 class="text-3xl font-bold text-white mb-6">المعلومات التي تعلمها الذكاء الاصطناعي</h3>
-            <div id="learned-data" class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>
-            </div>
-        </div>
+    <div id="robot-chat-messages" class="flex-grow overflow-y-auto p-4 flex flex-col gap-4"></div>
+    <div class="flex gap-2 p-2 border-top border-gray-700 items-center">
+      <label for="file-upload" class="cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-400 hover:text-white">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <input type="file" id="file-upload" class="hidden"/>
+      </label>
+      <input type="text" id="robot-chat-input" placeholder="اكتب رسالتك هنا..." class="flex-grow p-3 rounded-full bg-gray-800 border border-gray-700 text-white focus:outline-none"/>
+      <button id="robot-chat-send-btn" class="bg-blue-600 text-white p-3 rounded-full font-bold">إرسال</button>
     </div>
+  </div>
 
-    <!-- Robot Chat Interface -->
-    <div id="robot-chat-interface" class="hidden fixed top-0 left-0 w-full ه-full bg-[#0d1117] z-[90] flex-col justify-between p-4">
-        <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
-            <button id="back-to-dashboard-btn" class="text-white text-2xl">&larr;</button>
-            <h4 id="robot-chat-header" class="text-xl font-bold text-white flex-grow text-center"></h4>
-            <span class="w-6 h-6"></span>
-        </div>
-        <div id="robot-chat-messages" class="flex-grow overflow-y-auto p-4 flex flex-col gap-4"></div>
-        <div class="flex gap-2 p-2 border-top border-gray-700 items-center">
-            <label for="file-upload" class="cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-gray-400 hover:text-white">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <input type="file" id="file-upload" class="hidden">
-            </label>
-            <input type="text" id="robot-chat-input" placeholder="اكتب رسالتك هنا..." class="flex-grow p-3 rounded-full bg-gray-800 border border-gray-700 text-white focus:outline-none">
-            <button id="robot-chat-send-btn" class="bg-blue-600 text-white p-3 rounded-full font-bold">إرسال</button>
-        </div>
-    </div>
+  <script>
+    const robots = [
+      { name:"ألفا (Alfa)",   specialization:"مساعد التسويق الرقمي", img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933930_1280.jpg"},
+      { name:"فيزي (Vizi)",   specialization:"مساعد المبيعات",       img:"https://cdn.pixabay.com/photo/2023/04/21/16/24/ai-generated-7942231_1280.jpg"},
+      { name:"كورتكس (Cortex)", specialization:"مساعد مالي",        img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933931_1280.jpg"},
+      { name:"ليكس (Lex)",    specialization:"مساعد خدمة العملاء",    img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933932_1280.jpg"},
+      { name:"أوكتو (Octo)",  specialization:"مساعد العمليات",        img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933933_1280.jpg"},
+      { name:"مينا (Mina)",   specialization:"مساعد تحليل البيانات",  img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933934_1280.jpg"},
+      { name:"بولت (Bolt)",   specialization:"مساعد إدارة المشاريع",  img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933935_1280.jpg"},
+      { name:"ريكس (Rex)",    specialization:"مساعد الإدارة المالية", img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933936_1280.jpg"},
+      { name:"بادي (Buddy)",  specialization:"مساعد العلاقات العامة", img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933937_1280.jpg"},
+      { name:"روفر (Rover)",  specialization:"مساعد علاقات العملاء",  img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933938_1280.jpg"},
+      { name:"فالور (Valor)",  specialization:"مساعد التجارة الإلكترونية", img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933939_1280.jpg"},
+      { name:"زينيث (Zenith)", specialization:"مساعد الابتكار",       img:"https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933940_1280.jpg"}
+    ];
 
-    <script>
-        const robots = [
-            { name: "ألفا (Alfa)", specialization: "مساعد التسويق الرقمي", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933930_1280.jpg" },
-            { name: "فيزي (Vizi)", specialization: "مساعد المبيعات", img: "https://cdn.pixabay.com/photo/2023/04/21/16/24/ai-generated-7942231_1280.jpg" },
-            { name: "كورتكس (Cortex)", specialization: "مساعد مالي", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933931_1280.jpg" },
-            { name: "ليكس (Lex)", specialization: "مساعد خدمة العملاء", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933932_1280.jpg" },
-            { name: "أوكتو (Octo)", specialization: "مساعد العمليات", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933933_1280.jpg" },
-            { name: "مينا (Mina)", specialization: "مساعد تحليل البيانات", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933934_1280.jpg" },
-            { name: "بولت (Bolt)", specialization: "مساعد إدارة المشاريع", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933935_1280.jpg" },
-            { name: "ريكس (Rex)", specialization: "مساعد الإدارة المالية", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933936_1280.jpg" },
-            { name: "بادي (Buddy)", specialization: "مساعد العلاقات العامة", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933937_1280.jpg" },
-            { name: "روفر (Rover)", specialization: "مساعد علاقات العملاء", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933938_1280.jpg" },
-            { name: "فالور (Valor)", specialization: "مساعد التجارة الإلكترونية", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933939_1280.jpg" },
-            { name: "زينيث (Zenith)", specialization: "مساعد الابتكار", img: "https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933940_1280.jpg" }
-        ];
+    const faqItems=document.querySelectorAll('.faq-item');
+    faqItems.forEach(item=>{item.addEventListener('click',()=>item.classList.toggle('active'))});
 
-        const faqItems = document.querySelectorAll('.faq-item');
-        faqItems.forEach(item => { item.addEventListener('click', () => item.classList.toggle('active')); });
+    // UI elements
+    const loginBtn=document.getElementById('login-btn');
+    const loginModal=document.getElementById('login-modal');
+    const closeModal=document.querySelector('.close-btn');
+    const submitLogin=document.getElementById('submit-login');
+    const usernameInput=document.getElementById('username');
+    const passwordInput=document.getElementById('password');
+    const loginMessage=document.getElementById('login-message');
+    const mainContent=document.getElementById('main-content');
+    const mainHeader=document.getElementById('main-header');
 
-        // UI elements
-        const loginBtn = document.getElementById('login-btn');
-        const loginModal = document.getElementById('login-modal');
-        const closeModal = document.querySelector('.close-btn');
-        const submitLogin = document.getElementById('submit-login');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginMessage = document.getElementById('login-message');
-        const mainContent = document.getElementById('main-content');
-        const mainHeader = document.getElementById('main-header');
+    // Setup Chat
+    const setupChatInterface=document.getElementById('setup-chat-interface');
+    const setupChatMessages=document.getElementById('setup-chat-messages');
+    const setupChatInput=document.getElementById('setup-chat-input');
+    const setupChatSendBtn=document.getElementById('setup-chat-send-btn');
 
-        // Setup Chat elements
-        const setupChatInterface = document.getElementById('setup-chat-interface');
-        const setupChatMessages = document.getElementById('setup-chat-messages');
-        const setupChatInput = document.getElementById('setup-chat-input');
-        const setupChatSendBtn = document.getElementById('setup-chat-send-btn');
+    // Dashboard
+    const dashboardContainer=document.getElementById('dashboard-container');
+    const robotListContainer=document.getElementById('robot-list');
+    const conversationsListContainer=document.getElementById('conversations-list');
+    const profileBtn=document.getElementById('profile-btn');
+    const logoutBtn=document.getElementById('logout-btn');
 
-        // Dashboard elements
-        const dashboardContainer = document.getElementById('dashboard-container');
-        const robotListContainer = document.getElementById('robot-list');
-        const conversationsListContainer = document.getElementById('conversations-list');
-        const profileBtn = document.getElementById('profile-btn');
-        const logoutBtn = document.getElementById('logout-btn');
+    // Profile
+    const profileSection=document.getElementById('profile-section');
+    const backToDashboardFromProfileBtn=document.getElementById('back-to-dashboard-from-profile-btn');
+    const basicDataContainer=document.getElementById('basic-data');
+    const learnedDataContainer=document.getElementById('learned-data');
 
-        // Profile elements
-        const profileSection = document.getElementById('profile-section');
-        const backToDashboardFromProfileBtn = document.getElementById('back-to-dashboard-from-profile-btn');
-        const basicDataContainer = document.getElementById('basic-data');
-        const learnedDataContainer = document.getElementById('learned-data');
+    // Robot Chat
+    const robotChatInterface=document.getElementById('robot-chat-interface');
+    const robotChatHeader=document.getElementById('robot-chat-header');
+    const robotChatMessages=document.getElementById('robot-chat-messages');
+    const robotChatInput=document.getElementById('robot-chat-input');
+    const robotChatSendBtn=document.getElementById('robot-chat-send-btn');
+    const backToDashboardBtn=document.getElementById('back-to-dashboard-btn');
+    const fileUploadInput=document.getElementById('file-upload');
 
-        // Robot Chat elements
-        const robotChatInterface = document.getElementById('robot-chat-interface');
-        const robotChatHeader = document.getElementById('robot-chat-header');
-        const robotChatMessages = document.getElementById('robot-chat-messages');
-        const robotChatInput = document.getElementById('robot-chat-input');
-        const robotChatSendBtn = document.getElementById('robot-chat-send-btn');
-        const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
-        const fileUploadInput = document.getElementById('file-upload');
+    // State
+    let setupChatState=0;
+    let companyData={};
+    let currentRobot=null;
+    let robotChatState={};
+    let aiLearnedData=JSON.parse(localStorage.getItem('aiLearnedData'))||{};
 
-        // Chat conversation states
-        let setupChatState = 0;
-        let companyData = {};
-        let currentRobot = null;
-        let robotChatState = {};
-        let aiLearnedData = JSON.parse(localStorage.getItem('aiLearnedData')) || {};
+    const setupPrompts=[
+      {id:'name',text:"مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟"},
+      {id:'industry',text:"شكراً. وما هو مجال عمل شركتك الرئيسي؟ (مثلاً: التجارة الإلكترونية، الخدمات المالية، التكنولوجيا)"},
+      {id:'size',text:"فهمت. وكم عدد الموظفين في شركتك؟"},
+      {id:'audience',text:"تمام. من هو جمهوركم المستهدف؟ (مثلاً: أصحاب الأعمال الصغيرة، الشباب، العائلات)"},
+      {id:'goals',text:"رائع. أخيراً، ما هي أهدافك الرئيسية من استخدام أدواتنا؟ (مثلاً: زيادة المبيعات، تحسين خدمة العملاء، التوسع في سوق جديد)"}
+    ];
 
-        const setupPrompts = [
-            { id: 'name', text: "مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟" },
-            { id: 'industry', text: "شكراً. وما هو مجال عمل شركتك الرئيسي؟ (مثلاً: التجارة الإلكترونية، الخدمات المالية، التكنولوجيا)" },
-            { id: 'size', text: "فهمت. وكم عدد الموظفين في شركتك؟" },
-            { id: 'audience', text: "تمام. من هو جمهوركم المستهدف؟ (مثلاً: أصحاب الأعمال الصغيرة، الشباب، العائلات)" },
-            { id: 'goals', text: "رائع. أخيراً، ما هي أهدافك الرئيسية من استخدام أدواتنا؟ (مثلاً: زيادة المبيعات، تحسين خدمة العملاء، التوسع في سوق جديد)" }
-        ];
+    function addMessage(chatContainer,text,sender){
+      const el=document.createElement('div');
+      el.classList.add('chat-message',`${sender}-message`);
+      el.textContent=text;
+      chatContainer.appendChild(el);
+      chatContainer.scrollTop=chatContainer.scrollHeight;
+    }
 
-        function addMessage(chatContainer, text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('chat-message', `${sender}-message`);
-            messageElement.textContent = text;
-            chatContainer.appendChild(messageElement);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Landing Login
+    loginBtn.addEventListener('click',e=>{e.preventDefault();loginModal.style.display='flex'});
+    closeModal.addEventListener('click',()=>{loginModal.style.display='none'});
+    window.addEventListener('click',e=>{if(e.target===loginModal)loginModal.style.display='none'});
+    submitLogin.addEventListener('click',()=>{
+      const username=usernameInput.value;
+      const password=passwordInput.value;
+      if(username==='Aiagent'&&password==='2222'){
+        loginMessage.textContent='تم تسجيل الدخول بنجاح!';loginMessage.style.color='#10b981';
+        setTimeout(()=>{
+          loginModal.style.display='none';
+          if(localStorage.getItem('companyData')){showDashboard()}else{startSetupChat()}
+        },1500);
+      }else{
+        loginMessage.textContent='اسم المستخدم أو كلمة المرور غير صحيحة.';loginMessage.style.color='#ef4444';
+      }
+    });
+
+    // Setup chat
+    function startSetupChat(){
+      mainContent.classList.add('hidden');
+      mainHeader.classList.add('hidden');
+      setupChatInterface.classList.remove('hidden');
+      addMessage(setupChatMessages,setupPrompts[setupChatState].text,'ai');
+    }
+    setupChatSendBtn.addEventListener('click',handleSetupChatInput);
+    setupChatInput.addEventListener('keypress',e=>{if(e.key==='Enter')handleSetupChatInput()});
+
+    function handleSetupChatInput(){
+      const userMessage=setupChatInput.value.trim();
+      if(userMessage==='')return;
+      addMessage(setupChatMessages,userMessage,'user');
+      const currentId=setupPrompts[setupChatState].id;
+      companyData[currentId]=userMessage;
+      setupChatInput.value='';
+      setupChatState++;
+      setTimeout(()=>{
+        if(setupChatState<setupPrompts.length){
+          addMessage(setupChatMessages,setupPrompts[setupChatState].text,'ai');
+        }else{
+          addMessage(setupChatMessages,"ممتاز! لقد اكتمل ملفك بنجاح. يتم الآن إعداد أدواتك.",'ai');
+          localStorage.setItem('companyData',JSON.stringify(companyData));
+          setTimeout(()=>{
+            addMessage(setupChatMessages,"أهلاً بك في فريق العون الذكي!",'ai');
+            setupChatInterface.classList.add('hidden');showDashboard();
+          },2000);
         }
+      },1000);
+    }
 
-        // --- Landing Page & Login Logic ---
-        loginBtn.addEventListener('click', (e) => { e.preventDefault(); loginModal.style.display = 'flex'; });
-        closeModal.addEventListener('click', () => { loginModal.style.display = 'none'; });
-        window.addEventListener('click', (e) => { if (e.target === loginModal) loginModal.style.display = 'none'; });
-        submitLogin.addEventListener('click', () => {
-            const username = usernameInput.value;
-            const password = passwordInput.value;
-            if (username === 'Aiagent' && password === '2222') {
-                loginMessage.textContent = 'تم تسجيل الدخول بنجاح!'; loginMessage.style.color = '#10b981';
-                setTimeout(() => {
-                    loginModal.style.display = 'none';
-                    if (localStorage.getItem('companyData')) { showDashboard(); } else { startSetupChat(); }
-                }, 1500);
-            } else {
-                loginMessage.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.'; loginMessage.style.color = '#ef4444';
-            }
-        });
+    // Dashboard
+    function showDashboard(){
+      mainContent.classList.add('hidden');
+      mainHeader.classList.remove('hidden');
+      dashboardContainer.classList.remove('hidden');
+      robotListContainer.classList.remove('hidden');
+      profileSection.classList.add('hidden');
+      renderRobotList();renderConversationsList();
+    }
 
-        // --- Setup Chat Logic ---
-        function startSetupChat() {
-            mainContent.classList.add('hidden');
-            mainHeader.classList.add('hidden');
-            setupChatInterface.classList.remove('hidden');
-            addMessage(setupChatMessages, setupPrompts[setupChatState].text, 'ai');
+    function renderRobotList(){
+      robotListContainer.innerHTML='';
+      robots.forEach(robot=>{
+        const card=document.createElement('div');
+        card.className='robot-card';
+        card.dataset.name=robot.name;
+        card.innerHTML=`
+          <div class="robot-circle">
+            <img src="${robot.img}" alt="أيقونة روبوت ${robot.name}" class="robot-image"/>
+          </div>
+          <h4 class="font-bold mt-4 text-white">${robot.name}</h4>
+          <p class="text-sm text-gray-400 mt-2">${robot.specialization}</p>`;
+        card.addEventListener('click',()=>startRobotChat(robot.name));
+        robotListContainer.appendChild(card);
+      });
+    }
+
+    function renderConversationsList(){
+      conversationsListContainer.innerHTML='';
+      robots.forEach(robot=>{
+        const conversation=JSON.parse(localStorage.getItem(`conversation_${robot.name}`));
+        if(conversation&&conversation.length>0){
+          const item=document.createElement('div');
+          item.className='bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors';
+          item.textContent=`محادثة سابقة مع ${robot.name}`;
+          item.addEventListener('click',()=>startRobotChat(robot.name));
+          conversationsListContainer.appendChild(item);
         }
+      });
+    }
 
-        setupChatSendBtn.addEventListener('click', handleSetupChatInput);
-        setupChatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSetupChatInput(); });
+    // Profile
+    profileBtn.addEventListener('click',e=>{e.preventDefault();dashboardContainer.classList.add('hidden');profileSection.classList.remove('hidden');updateProfileSection()});
+    backToDashboardFromProfileBtn.addEventListener('click',()=>{profileSection.classList.add('hidden');dashboardContainer.classList.remove('hidden')});
 
-        function handleSetupChatInput() {
-            const userMessage = setupChatInput.value.trim();
-            if (userMessage === '') return;
-            addMessage(setupChatMessages, userMessage, 'user');
-            const currentPromptId = setupPrompts[setupChatState].id;
-            companyData[currentPromptId] = userMessage;
-            setupChatInput.value = '';
-            setupChatState++;
-            setTimeout(() => {
-                if (setupChatState < setupPrompts.length) {
-                    addMessage(setupChatMessages, setupPrompts[setupChatState].text, 'ai');
-                } else {
-                    addMessage(setupChatMessages, "ممتاز! لقد اكتمل ملفك بنجاح. يتم الآن إعداد أدواتك.", 'ai');
-                    localStorage.setItem('companyData', JSON.stringify(companyData));
-                    setTimeout(() => {
-                        addMessage(setupChatMessages, "أهلاً بك في فريق العون الذكي!", 'ai');
-                        setupChatInterface.classList.add('hidden'); showDashboard();
-                    }, 2000);
-                }
-            }, 1000);
+    function updateProfileSection(){
+      const basicData=JSON.parse(localStorage.getItem('companyData'))||{};
+      const learnedData=JSON.parse(localStorage.getItem('aiLearnedData'))||{};
+      basicDataContainer.innerHTML=`
+        <p class="text-gray-300"><b>اسم الشركة:</b> ${basicData.name||'غير متوفر'}</p>
+        <p class="text-gray-300"><b>مجال العمل:</b> ${basicData.industry||'غير متوفر'}</p>
+        <p class="text-gray-300"><b>الأهداف:</b> ${basicData.goals||'غير متوفر'}</p>`;
+      learnedDataContainer.innerHTML='';
+      const keys=Object.keys(learnedData);
+      if(keys.length>0){
+        keys.forEach(k=>{learnedDataContainer.innerHTML+=`<p class="text-gray-300"><b>${k}:</b> ${learnedData[k]}</p>`});
+      }else{
+        learnedDataContainer.innerHTML=`<p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>`;
+      }
+    }
+
+    // Seed prompts
+    const robotPrompts={
+      "ألفا (Alfa)":[
+        {role:'ai',text:'أهلاً بك! أنا ألفا، مساعد التسويق الرقمي. يسعدني أن أعمل معك. للبدء، ما هو هدفك الرئيسي من الحملة التسويقية؟ هل هو زيادة المبيعات، أم بناء الوعي بالعلامة التجارية، أم جذب عملاء جدد؟'},
+        {role:'ai',text:'فهمت. وهل لديك جمهور مستهدف محدد في ذهنك؟ مثلاً، هل هم أصحاب أعمال صغيرة، أم شباب مهتمون بالتكنولوجيا، أم شيء آخر؟'},
+        {role:'ai',text:'رائع. بناءً على هذه المعلومات، يمكننا الآن البدء. ما هي أول مهمة تود أن تنجزها؟'}
+      ],
+      "فيزي (Vizi)":[
+        {role:'ai',text:'مرحباً، أنا فيزي، مساعد المبيعات. أنا هنا لأساعدك في تحقيق أهدافك. ما هو منتجك أو خدمتك الرئيسية التي تريد بيعها؟'},
+        {role:'ai',text:'فهمت. ما هي أكبر تحدياتك في عملية البيع الحالية؟'},
+        {role:'ai',text:'لدي بعض الأفكار! ما هو أول شيء تود تحسينه في استراتيجية المبيعات؟'}
+      ],
+      "كورتكس (Cortex)":[
+        {role:'ai',text:'أنا كورتكس، مساعدك المالي. لمساعدتك، ما هو التحدي المالي الأكبر الذي تواجهه شركتك حالياً؟'},
+        {role:'ai',text:'ممتاز. ما هو هدفك المالي الرئيسي لهذا الربع؟'},
+        {role:'ai',text:'شكراً. ما هي أول مهمة تريد مني القيام بها؟'}
+      ],
+      "ليكس (Lex)":[
+        {role:'ai',text:'أنا ليكس، مساعد خدمة العملاء. ما هو نوع المشكلة التي تواجهها اليوم؟'},
+        {role:'ai',text:'فهمت. كم عدد العملاء المتأثرين بهذه المشكلة؟'},
+        {role:'ai',text:'تمام. هل لديك أي بيانات إضافية حول المشكلة؟'}
+      ],
+      "أوكتو (Octo)":[
+        {role:'ai',text:'أنا أوكتو، مساعد العمليات. ما هي العملية التي تريد مني تحسينها في شركتك؟'},
+        {role:'ai',text:'تمام. ما هي أكبر عقبة تواجهك حالياً في هذه العملية؟'},
+        {role:'ai',text:'شكراً. ما هو الإجراء الذي تود أن نبدأ به؟'}
+      ],
+      "مينا (Mina)":[
+        {role:'ai',text:'أنا مينا، مساعد تحليل البيانات. ما هو نوع البيانات التي تريد مني تحليلها؟'},
+        {role:'ai',text:'فهمت. ما هي الرؤى التي تأمل في الحصول عليها من هذا التحليل؟'},
+        {role:'ai',text:'شكراً. ما هو أول تقرير تود أن أعده؟'}
+      ],
+      "بولت (Bolt)":[
+        {role:'ai',text:'أنا بولت، مساعد إدارة المشاريع. ما هو اسم المشروع الذي نعمل عليه؟'},
+        {role:'ai',text:'ما هو الموعد النهائي المحدد لهذا المشروع؟'},
+        {role:'ai',text:'فهمت. ما هي الخطوة الأولى التي يجب أن نبدأ بها؟'}
+      ],
+      "ريكس (Rex)":[
+        {role:'ai',text:'أنا ريكس، مساعد الإدارة المالية. ما هو التحدي المالي الذي تواجهه حاليًا في شركتك؟'},
+        {role:'ai',text:'تمام. ما هي الميزانية المتاحة للمشروع؟'},
+        {role:'ai',text:'فهمت. ما هو أول شيء تود مني تحليله؟'}
+      ],
+      "بادي (Buddy)":[
+        {role:'ai',text:'أنا بادي، مساعد العلاقات العامة. ما هي الحملة التي تعمل عليها الآن؟'},
+        {role:'ai',text:'ما هو الجمهور المستهدف لهذه الحملة؟'},
+        {role:'ai',text:'تمام. ما هي الرسالة الرئيسية التي تود إيصالها؟'}
+      ],
+      "روفر (Rover)":[
+        {role:'ai',text:'أنا روفر، مساعد علاقات العملاء. ما هو هدفك الرئيسي لتعزيز علاقات العملاء؟'},
+        {role:'ai',text:'فهمت. ما هو التحدي الأكبر الذي تواجهه مع عملائك حاليًا؟'},
+        {role:'ai',text:'لدي بعض الأفكار! ما هي أول خطوة تود اتخاذها؟'}
+      ],
+      "فالور (Valor)":[
+        {role:'ai',text:'أنا فالور، مساعد التجارة الإلكترونية. ما هو التحدي الأكبر الذي تواجهه في متجرك الإلكتروني؟'},
+        {role:'ai',text:'تمام. ما هو هدفك الرئيسي لمتجرك؟'},
+        {role:'ai',text:'فهمت. ما هي أول مهمة تريد مني القيام بها؟'}
+      ],
+      "زينيث (Zenith)":[
+        {role:'ai',text:'أنا زينيث، مساعد الابتكار. ما هي الفكرة الجديدة التي تود تطويرها؟'},
+        {role:'ai',text:'ما هي الموارد المتاحة لديك لتطوير هذه الفكرة؟'},
+        {role:'ai',text:'شكراً. ما هي الخطوة الأولى التي تود اتخاذها لتنفيذ هذه الفكرة؟'}
+      ]
+    };
+
+    function startRobotChat(robotName){
+      currentRobot=robotName;
+      dashboardContainer.classList.add('hidden');
+      robotChatInterface.classList.remove('hidden');
+      robotChatHeader.textContent=`محادثة مع ${robotName}`;
+      robotChatMessages.innerHTML='';
+      const saved=JSON.parse(localStorage.getItem(`conversation_${robotName}`))||[];
+      if(saved.length>0){
+        saved.forEach(msg=>addMessage(robotChatMessages,msg.text,msg.sender));
+      }else{
+        robotChatState[robotName]=0;
+        if(robotPrompts[robotName]&&robotPrompts[robotName].length>0){
+          addMessage(robotChatMessages,robotPrompts[robotName][0].text,'ai');
+        }else{
+          addMessage(robotChatMessages,"عذراً، لا يمكنني بدء المحادثة الآن. يرجى العودة لاحقاً.",'ai');
         }
+      }
+    }
 
-        // --- Dashboard Logic ---
-        function showDashboard() {
-            mainContent.classList.add('hidden');
-            mainHeader.classList.remove('hidden');
-            dashboardContainer.classList.remove('hidden');
-            robotListContainer.classList.remove('hidden');
-            profileSection.classList.add('hidden');
-            renderRobotList(); renderConversationsList();
+    backToDashboardBtn.addEventListener('click',()=>{
+      robotChatInterface.classList.add('hidden');
+      dashboardContainer.classList.remove('hidden');
+      mainHeader.classList.remove('hidden');
+      renderConversationsList();
+    });
+
+    fileUploadInput.addEventListener('change',e=>{
+      const file=e.target.files[0];
+      if(file){
+        addMessage(robotChatMessages,`تم تحميل الملف: ${file.name}. جاري تحليله...`,'user');
+        setTimeout(()=>{
+          const aiResponse=`شكراً لك. لقد قمت بتحليل الملف بنجاح. ما هو سؤالك بخصوصه؟`;
+          addMessage(robotChatMessages,aiResponse,'ai');
+          const saved=JSON.parse(localStorage.getItem(`conversation_${currentRobot}`))||[];
+          saved.push({text:`تم رفع ملف: ${file.name}`,sender:'user'});
+          saved.push({text:aiResponse,sender:'ai'});
+          localStorage.setItem(`conversation_${currentRobot}`,JSON.stringify(saved));
+        },2000);
+      }
+    });
+
+    /* ===== Gemini Bridge ===== */
+    function currentPersona(){return typeof currentRobot==="string"?currentRobot:""}
+    async function geminiReply(userText,persona=""){
+      const res=await fetch("/api/chat",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({messages:[{role:"user",text:userText}],persona})
+      });
+      if(!res.ok) throw new Error("Chat API failed");
+      const data=await res.json();
+      return (data&&data.text)?data.text:"لم أستقبل ردًا من النموذج.";
+    }
+    function addAIMessage(text){addMessage(robotChatMessages,text,"ai")}
+    /* ========================= */
+
+    function handleRobotChatInput(){
+      const userMessage=robotChatInput.value.trim();
+      if(userMessage==='')return;
+      addMessage(robotChatMessages,userMessage,'user');
+
+      const saved=JSON.parse(localStorage.getItem(`conversation_${currentRobot}`))||[];
+      saved.push({text:userMessage,sender:'user'});
+      robotChatInput.value='';
+
+      (async()=>{
+        try{
+          const reply=await geminiReply(userMessage,currentPersona());
+          addAIMessage(reply);
+          saved.push({text:reply,sender:'ai'});
+          localStorage.setItem(`conversation_${currentRobot}`,JSON.stringify(saved));
+        }catch(err){
+          console.error(err);
+          const fallback="⚠️ حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. حاول لاحقًا.";
+          addAIMessage(fallback);
+          saved.push({text:fallback,sender:'ai'});
+          localStorage.setItem(`conversation_${currentRobot}`,JSON.stringify(saved));
         }
+      })();
+    }
 
-        function renderRobotList() {
-            robotListContainer.innerHTML = '';
-            robots.forEach(robot => {
-                const card = document.createElement('div');
-                card.className = 'robot-card';
-                card.dataset.name = robot.name;
-                card.innerHTML = `
-                    <div class="robot-circle">
-                        <img src="${robot.img}" alt="أيقونة روبوت ${robot.name}" class="robot-image"/>
-                    </div>
-                    <h4 class="font-bold mt-4 text-white">${robot.name}</h4>
-                    <p class="text-sm text-gray-400 mt-2">${robot.specialization}</p>
-                `;
-                card.addEventListener('click', () => startRobotChat(robot.name));
-                robotListContainer.appendChild(card);
-            });
-        }
-        
-        function renderConversationsList() {
-            conversationsListContainer.innerHTML = '';
-            robots.forEach(robot => {
-                const conversation = JSON.parse(localStorage.getItem(`conversation_${robot.name}`));
-                if (conversation && conversation.length > 0) {
-                    const listItem = document.createElement('div');
-                    listItem.className = 'bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors';
-                    listItem.textContent = `محادثة سابقة مع ${robot.name}`;
-                    listItem.addEventListener('click', () => startRobotChat(robot.name));
-                    conversationsListContainer.appendChild(listItem);
-                }
-            });
-        }
+    robotChatSendBtn.addEventListener('click',handleRobotChatInput);
+    robotChatInput.addEventListener('keypress',e=>{if(e.key==='Enter')handleRobotChatInput()});
 
-        // --- Profile Logic ---
-        profileBtn.addEventListener('click', (e) => { e.preventDefault(); dashboardContainer.classList.add('hidden'); profileSection.classList.remove('hidden'); updateProfileSection(); });
-        backToDashboardFromProfileBtn.addEventListener('click', () => { profileSection.classList.add('hidden'); dashboardContainer.classList.remove('hidden'); });
-
-        function updateProfileSection() {
-            const basicData = JSON.parse(localStorage.getItem('companyData')) || {};
-            const learnedData = JSON.parse(localStorage.getItem('aiLearnedData')) || {};
-            basicDataContainer.innerHTML = `
-                <p class="text-gray-300"><b>اسم الشركة:</b> ${basicData.name || 'غير متوفر'}</p>
-                <p class="text-gray-300"><b>مجال العمل:</b> ${basicData.industry || 'غير متوفر'}</p>
-                <p class="text-gray-300"><b>الأهداف:</b> ${basicData.goals || 'غير متوفر'}</p>
-            `;
-            learnedDataContainer.innerHTML = '';
-            const learnedKeys = Object.keys(learnedData);
-            if (learnedKeys.length > 0) {
-                learnedKeys.forEach(key => { learnedDataContainer.innerHTML += `<p class="text-gray-300"><b>${key}:</b> ${learnedData[key]}</p>`; });
-            } else {
-                learnedDataContainer.innerHTML = `<p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>`;
-            }
-        }
-        
-        // --- Robot Chat Seed Prompts (كما هي) ---
-        const robotPrompts = {
-            "ألفا (Alfa)": [
-                { role: 'ai', text: 'أهلاً بك! أنا ألفا، مساعد التسويق الرقمي. يسعدني أن أعمل معك. للبدء، ما هو هدفك الرئيسي من الحملة التسويقية؟ هل هو زيادة المبيعات، أم بناء الوعي بالعلامة التجارية، أم جذب عملاء جدد؟' },
-                { role: 'ai', text: 'فهمت. وهل لديك جمهور مستهدف محدد في ذهنك؟ مثلاً، هل هم أصحاب أعمال صغيرة، أم شباب مهتمون بالتكنولوجيا، أم شيء آخر؟' },
-                { role: 'ai', text: 'رائع. بناءً على هذه المعلومات، يمكننا الآن البدء. ما هي أول مهمة تود أن تنجزها؟' }
-            ],
-            "فيزي (Vizi)": [
-                { role: 'ai', text: 'مرحباً، أنا فيزي، مساعد المبيعات. أنا هنا لأساعدك في تحقيق أهدافك. ما هو منتجك أو خدمتك الرئيسية التي تريد بيعها؟' },
-                { role: 'ai', text: 'فهمت. ما هي أكبر تحدياتك في عملية البيع الحالية؟' },
-                { role: 'ai', text: 'لدي بعض الأفكار! ما هو أول شيء تود تحسينه في استراتيجية المبيعات؟' }
-            ],
-            "كورتكس (Cortex)": [
-                { role: 'ai', text: 'أنا كورتكس، مساعدك المالي. لمساعدتك، ما هو التحدي المالي الأكبر الذي تواجهه شركتك حالياً؟' },
-                { role: 'ai', text: 'ممتاز. ما هو هدفك المالي الرئيسي لهذا الربع؟' },
-                { role: 'ai', text: 'شكراً. ما هي أول مهمة تريد مني القيام بها؟' }
-            ],
-            "ليكس (Lex)": [
-                { role: 'ai', text: 'أنا ليكس، مساعد خدمة العملاء. ما هو نوع المشكلة التي تواجهها اليوم؟' },
-                { role: 'ai', text: 'فهمت. كم عدد العملاء المتأثرين بهذه المشكلة؟' },
-                { role: 'ai', text: 'تمام. هل لديك أي بيانات إضافية حول المشكلة؟' }
-            ],
-            "أوكتو (Octo)": [
-                { role: 'ai', text: 'أنا أوكتو، مساعد العمليات. ما هي العملية التي تريد مني تحسينها في شركتك؟' },
-                { role: 'ai', text: 'تمام. ما هي أكبر عقبة تواجهك حالياً في هذه العملية؟' },
-                { role: 'ai', text: 'شكراً. ما هو الإجراء الذي تود أن نبدأ به؟' }
-            ],
-            "مينا (Mina)": [
-                { role: 'ai', text: 'أنا مينا، مساعد تحليل البيانات. ما هو نوع البيانات التي تريد مني تحليلها؟' },
-                { role: 'ai', text: 'فهمت. ما هي الرؤى التي تأمل في الحصول عليها من هذا التحليل؟' },
-                { role: 'ai', text: 'شكراً. ما هو أول تقرير تود أن أعده؟' }
-            ],
-            "بولت (Bolt)": [
-                { role: 'ai', text: 'أنا بولت، مساعد إدارة المشاريع. ما هو اسم المشروع الذي نعمل عليه؟' },
-                { role: 'ai', text: 'ما هو الموعد النهائي المحدد لهذا المشروع؟' },
-                { role: 'ai', text: 'فهمت. ما هي الخطوة الأولى التي يجب أن نبدأ بها؟' }
-            ],
-            "ريكس (Rex)": [
-                { role: 'ai', text: 'أنا ريكس، مساعد الإدارة المالية. ما هو التحدي المالي الذي تواجهه حاليًا في شركتك؟' },
-                { role: 'ai', text: 'تمام. ما هي الميزانية المتاحة للمشروع؟' },
-                { role: 'ai', text: 'فهمت. ما هو أول شيء تود مني تحليله؟' }
-            ],
-            "بادي (Buddy)": [
-                { role: 'ai', text: 'أنا بادي، مساعد العلاقات العامة. ما هي الحملة التي تعمل عليها الآن؟' },
-                { role: 'ai', text: 'ما هو الجمهور المستهدف لهذه الحملة؟' },
-                { role: 'ai', text: 'تمام. ما هي الرسالة الرئيسية التي تود إيصالها؟' }
-            ],
-            "روفر (Rover)": [
-                { role: 'ai', text: 'أنا روفر، مساعد علاقات العملاء. ما هو هدفك الرئيسي لتعزيز علاقات العملاء؟' },
-                { role: 'ai', text: 'فهمت. ما هو التحدي الأكبر الذي تواجهه مع عملائك حاليًا؟' },
-                { role: 'ai', text: 'لدي بعض الأفكار! ما هي أول خطوة تود اتخاذها؟' }
-            ],
-            "فالور (Valor)": [
-                { role: 'ai', text: 'أنا فالور، مساعد التجارة الإلكترونية. ما هو التحدي الأكبر الذي تواجهه في متجرك الإلكتروني؟' },
-                { role: 'ai', text: 'تمام. ما هو هدفك الرئيسي لمتجرك؟' },
-                { role: 'ai', text: 'فهمت. ما هي أول مهمة تريد مني القيام بها؟' }
-            ],
-            "زينيث (Zenith)": [
-                { role: 'ai', text: 'أنا زينيث، مساعد الابتكار. ما هي الفكرة الجديدة التي تود تطويرها؟' },
-                { role: 'ai', text: 'ما هي الموارد المتاحة لديك لتطوير هذه الفكرة؟' },
-                { role: 'ai', text: 'شكراً. ما هي الخطوة الأولى التي تود اتخاذها لتنفيذ هذه الفكرة؟' }
-            ]
-        };
-
-        function startRobotChat(robotName) {
-            currentRobot = robotName;
-            dashboardContainer.classList.add('hidden');
-            robotChatInterface.classList.remove('hidden');
-            robotChatHeader.textContent = `محادثة مع ${robotName}`;
-            robotChatMessages.innerHTML = '';
-            
-            const savedConversation = JSON.parse(localStorage.getItem(`conversation_${robotName}`)) || [];
-            if (savedConversation.length > 0) {
-                savedConversation.forEach(msg => addMessage(robotChatMessages, msg.text, msg.sender));
-            } else {
-                robotChatState[robotName] = 0;
-                if (robotPrompts[robotName] && robotPrompts[robotName].length > 0) {
-                    addMessage(robotChatMessages, robotPrompts[robotName][0].text, 'ai');
-                } else {
-                    addMessage(robotChatMessages, "عذراً، لا يمكنني بدء المحادثة الآن. يرجى العودة لاحقاً.", 'ai');
-                }
-            }
-        }
-        
-        backToDashboardBtn.addEventListener('click', () => {
-            robotChatInterface.classList.add('hidden');
-            dashboardContainer.classList.remove('hidden');
-            mainHeader.classList.remove('hidden');
-            renderConversationsList();
-        });
-
-        fileUploadInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                addMessage(robotChatMessages, `تم تحميل الملف: ${file.name}. جاري تحليله...`, 'user');
-                setTimeout(() => {
-                    const aiResponse = `شكراً لك. لقد قمت بتحليل الملف بنجاح. ما هو سؤالك بخصوصه؟`;
-                    addMessage(robotChatMessages, aiResponse, 'ai');
-                    const savedConversation = JSON.parse(localStorage.getItem(`conversation_${currentRobot}`)) || [];
-                    savedConversation.push({ text: `تم رفع ملف: ${file.name}`, sender: 'user' });
-                    savedConversation.push({ text: aiResponse, sender: 'ai' });
-                    localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(savedConversation));
-                }, 2000);
-            }
-        });
-
-        /* ================== Gemini Bridge (بدون أي تغيير بصري) ================== */
-        function currentPersona() { return typeof currentRobot === "string" ? currentRobot : ""; }
-        async function geminiReply(userText, persona = "") {
-          const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: [{ role: "user", text: userText }], persona })
-          });
-          if (!res.ok) throw new Error("Chat API failed");
-          const data = await res.json();
-          return (data && data.text) ? data.text : "لم أستقبل ردًا من النموذج.";
-        }
-        function addAIMessage(text) { addMessage(robotChatMessages, text, "ai"); }
-        /* ======================================================================= */
-
-        // استبدال منطق الإرسال فقط ليرتبط بـ Gemini — الواجهة تبقى كما هي
-        function handleRobotChatInput() {
-            const userMessage = robotChatInput.value.trim();
-            if (userMessage === '') return;
-            addMessage(robotChatMessages, userMessage, 'user');
-
-            const savedConversation = JSON.parse(localStorage.getItem(`conversation_${currentRobot}`)) || [];
-            savedConversation.push({ text: userMessage, sender: 'user' });
-
-            robotChatInput.value = '';
-
-            (async () => {
-                try {
-                    const reply = await geminiReply(userMessage, currentPersona());
-                    addAIMessage(reply);
-                    savedConversation.push({ text: reply, sender: 'ai' });
-                    localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(savedConversation));
-                } catch (err) {
-                    console.error(err);
-                    const fallback = "⚠️ حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. حاول لاحقًا.";
-                    addAIMessage(fallback);
-                    savedConversation.push({ text: fallback, sender: 'ai' });
-                    localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(savedConversation));
-                }
-            })();
-        }
-
-        robotChatSendBtn.addEventListener('click', handleRobotChatInput);
-        robotChatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleRobotChatInput(); });
-
-        // Initial check for setup
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('companyData')) {
-                mainContent.classList.add('hidden');
-                mainHeader.classList.remove('hidden');
-                dashboardContainer.classList.remove('hidden');
-                renderRobotList();
-                renderConversationsList();
-            }
-        });
-    </script>
-    <script src="auth-bridge-global.js"></script>
+    // Initial load
+    document.addEventListener('DOMContentLoaded',()=>{
+      if(localStorage.getItem('companyData')){
+        mainContent.classList.add('hidden');
+        mainHeader.classList.remove('hidden');
+        dashboardContainer.classList.remove('hidden');
+        renderRobotList();
+        renderConversationsList();
+      }
+    });
+  </script>
+  <script src="auth-bridge-global.js"></script>
 </body>
 </html>
