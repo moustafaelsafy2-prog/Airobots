@@ -11,7 +11,8 @@
     "serve:static": "npx http-server public -p 8080"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.12.0"
+    "@google/generative-ai": "^0.12.0",
+    "@netlify/blobs": "^6.6.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0",
