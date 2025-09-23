@@ -6,9 +6,9 @@ export default async (req) => {
   const method = req.method || "GET";
 
   try {
-    // تحميل المستخدمين الحاليين
     let users = (await store.get("users.json", { type: "json" })) || [];
 
+    // === GET: قراءة المستخدمين ===
     if (method === "GET") {
       return new Response(JSON.stringify({ ok: true, users }), {
         status: 200,
@@ -16,17 +16,18 @@ export default async (req) => {
       });
     }
 
+    // === POST: إضافة مستخدم جديد ===
     if (method === "POST") {
       const body = await req.json();
       if (!body.username || !body.password) {
-        return new Response(JSON.stringify({ ok: false, error: "بيانات ناقصة" }), {
+        return new Response(JSON.stringify({ ok: false, error: "البيانات ناقصة" }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
         });
       }
 
       body.id = Date.now().toString();
-      body.password = btoa(body.password); // تخزين مبسط
+      body.password = btoa(body.password); // تشفير مبسط Base64
       users.push(body);
 
       await store.set("users.json", JSON.stringify(users));
@@ -37,10 +38,12 @@ export default async (req) => {
       });
     }
 
+    // === DELETE: حذف مستخدم ===
     if (method === "DELETE") {
       const url = new URL(req.url);
       const id = url.searchParams.get("id");
       users = users.filter((u) => u.id !== id);
+
       await store.set("users.json", JSON.stringify(users));
 
       return new Response(JSON.stringify({ ok: true, users }), {
@@ -49,6 +52,7 @@ export default async (req) => {
       });
     }
 
+    // === ميثود غير مدعوم ===
     return new Response(JSON.stringify({ ok: false, error: "Method Not Allowed" }), {
       status: 405,
       headers: { "Content-Type": "application/json" },
