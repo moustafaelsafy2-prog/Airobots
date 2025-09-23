@@ -499,12 +499,13 @@
       { id: 'goals', text: "رائع. أخيراً، ما هي أهدافك الرئيسية من استخدام أدواتنا؟ (مثلاً: زيادة المبيعات، تحسين خدمة العملاء، التوسع في سوق جديد)" }
     ];
 
+    // هذه هي الدالة الأساسية لإضافة الرسائل
     function addMessage(chatContainer, text, sender) {
       const messageElement = document.createElement('div');
       messageElement.classList.add('chat-message', `${sender}-message`);
       messageElement.textContent = text;
       chatContainer.appendChild(messageElement);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      // التمرير التلقائي الآن يتم إدارته بواسطة دالة منفصلة
     }
 
     /* --- Landing Page & Login Logic --- */
@@ -816,6 +817,8 @@
         mainContent.classList.add('hidden');
         mainHeader.classList.remove('hidden');
         dashboardContainer.classList.remove('hidden');
+        robotListContainer.classList.remove('hidden');
+        profileSection.classList.add('hidden');
         renderRobotList();
         renderConversationsList();
       }
@@ -842,38 +845,8 @@
       sync();
     })();
 
-    (function smartScroll() {
-      const btn = document.getElementById('scroll-to-bottom');
-      const containers = [document.getElementById('robot-chat-messages'), document.getElementById('setup-chat-messages')].filter(Boolean);
-      function isNearBottom(el, px = 120) {
-        return (el.scrollHeight - el.scrollTop - el.clientHeight) < px;
-      }
-      function scrollToBottom(el) { el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }
-      function refreshButtonVisibility() {
-        const active = containers.find(el => el && el.offsetParent !== null);
-        if (!active) return;
-        btn.classList.toggle('show', !isNearBottom(active));
-      }
-      containers.forEach(el => el.addEventListener('scroll', refreshButtonVisibility, { passive: true }));
-      btn.addEventListener('click', () => {
-        const active = containers.find(el => el && el.offsetParent !== null);
-        if (active) scrollToBottom(active);
-      });
-      const _addMessage = addMessage;
-      window.addMessage = function(chatContainer, text, sender) {
-        const stick = isNearBottom(chatContainer);
-        _addMessage(chatContainer, text, sender);
-        if (stick) chatContainer.scrollTop = chatContainer.scrollHeight; else refreshButtonVisibility();
-      };
-      document.addEventListener('DOMContentLoaded', () => containers.forEach(c => c && (c.scrollTop = c.scrollHeight)));
-    })();
-  </script>
-
-  <!-- =========================
-       إضافات: سلوك التمرير الذكي (لا يحذف شيء - مجرد طبقة فوقية)
-       ========================= -->
-  <script>
-    (function enhanceChatScrollBehavior(){
+    // هذه هي الدالة التي تحقق تجربة التمرير الشبيهة بالواتساب
+    (function enhanceChatScrollBehavior() {
       const BOT = {
         containers: []
       };
@@ -884,60 +857,15 @@
       if (robotChatMessagesEl) BOT.containers.push(robotChatMessagesEl);
       if (setupChatMessagesEl) BOT.containers.push(setupChatMessagesEl);
 
-      // Helper: هل المستخدم يتصفح لأعلى (يعني لا نرغم على scroll to bottom)
+      // دالة مساعدة: تتحقق إذا كان المستخدم قريبًا من أسفل صفحة الدردشة
       function isUserAtBottom(container, threshold = 120) {
+        if (!container) return true; // إذا لم يكن هناك container، افترض أنه في الأسفل لتجنب المشاكل
         return (container.scrollHeight - container.scrollTop - container.clientHeight) < threshold;
-      }
-
-      // Auto-scroll فقط إذا المستخدم في الأسفل
-      function maybeAutoScroll(container) {
-        if (!container) return;
-        if (isUserAtBottom(container, 120)) {
-          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-        }
-      }
-
-      // مراقب تغيّر DOM: عند إضافة رسالة جديدة، نفعل auto-scroll بشرط
-      function watchContainer(container) {
-        if (!container) return;
-        // نستخدم MutationObserver لمراقبة الرسائل المضافة
-        const mo = new MutationObserver((mutations) => {
-          // لو أضافت عناصر جديدة
-          const added = mutations.some(m => m.addedNodes && m.addedNodes.length);
-          if (!added) return;
-          // لا نزعج المستخدم إن كان يتصفح لأعلى
-          if (isUserAtBottom(container, 120)) {
-            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-          } else {
-            // إظهار زر العودة لآخر الرسائل
-            updateScrollButtonVisibility(container);
-          }
-        });
-        mo.observe(container, { childList: true, subtree: false });
-      }
-
-      // دعم اللمس / السحب (بعض البيئات قد لا تحتاجها لكن نحسّن التفاعل)
-      function enableTouchScroll(container) {
-        if (!container) return;
-        let startY = 0, startScroll = 0;
-        container.addEventListener('touchstart', (e) => {
-          if (e.touches && e.touches.length) {
-            startY = e.touches[0].pageY;
-            startScroll = container.scrollTop;
-          }
-        }, { passive: true });
-
-        container.addEventListener('touchmove', (e) => {
-          if (!(e.touches && e.touches.length)) return;
-          const dy = e.touches[0].pageY - startY;
-          // نطبق التحريك اليدوي على الscrollTop
-          container.scrollTop = startScroll - dy;
-        }, { passive: true });
       }
 
       // تحديث ظهور زر "آخر الرسائل"
       function updateScrollButtonVisibility(activeContainer) {
-        if (!scrollBtn) return;
+        if (!scrollBtn || !activeContainer) return;
         const show = !isUserAtBottom(activeContainer, 150);
         if (show) {
           scrollBtn.classList.add('show');
@@ -946,19 +874,36 @@
         }
       }
 
-      // ربط الأحداث على كل Container
+      // وظيفة للتمرير التلقائي، تستخدمها دالة addMessage
+      function maybeAutoScroll(container) {
+        if (!container) return;
+        if (isUserAtBottom(container, 120)) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+      }
+
+      // نستخدم MutationObserver لمراقبة إضافة الرسائل الجديدة
+      // هذا هو العنصر الأساسي لتحقيق تجربة واتساب
+      function watchContainer(container) {
+        if (!container) return;
+        const mo = new MutationObserver((mutations) => {
+          const added = mutations.some(m => m.addedNodes && m.addedNodes.length);
+          if (added) {
+            maybeAutoScroll(container);
+          }
+        });
+        mo.observe(container, { childList: true, subtree: false });
+      }
+
+      // ربط الأحداث على كل container
       BOT.containers.forEach(c => {
         // Scroll listener — إظهار/إخفاء الزر حسب الموقع
         c.addEventListener('scroll', () => {
-          // اختر الcontainer الظاهر حالياً (الذي ليس مخفي)
           const active = BOT.containers.find(el => el && el.offsetParent !== null) || c;
           updateScrollButtonVisibility(active);
         }, { passive: true });
 
-        // enable touch / drag scroll
-        enableTouchScroll(c);
-
-        // mutation observer
+        // Mutation Observer
         watchContainer(c);
       });
 
@@ -974,30 +919,29 @@
       }
 
       // عندما يركز المستخدم على الحقل لإدخال رسالة، ننزل لآخر الرسائل (مثل واتساب)
-      if (robotChatInput) {
-        robotChatInput.addEventListener('focus', () => {
-          const active = document.getElementById('robot-chat-messages');
-          if (active) active.scrollTo({ top: active.scrollHeight, behavior: 'smooth' });
+      const inputElements = [robotChatInput, setupChatInput].filter(Boolean);
+      inputElements.forEach(inputEl => {
+        inputEl.addEventListener('focus', () => {
+          const activeContainer = inputEl.id === 'robot-chat-input' ? robotChatMessagesEl : setupChatMessagesEl;
+          if (activeContainer) {
+            activeContainer.scrollTo({ top: activeContainer.scrollHeight, behavior: 'smooth' });
+          }
         });
-      }
-      if (setupChatInput) {
-        setupChatInput.addEventListener('focus', () => {
-          const active = document.getElementById('setup-chat-messages');
-          if (active) active.scrollTo({ top: active.scrollHeight, behavior: 'smooth' });
-        });
-      }
-
-      // إذا كانت هناك رسائل محفوظة عند الفتح، انزل لأسفل
-      document.addEventListener('DOMContentLoaded', () => {
-        BOT.containers.forEach(c => { try { c.scrollTop = c.scrollHeight; } catch(e){} });
       });
 
-      // expose small API إن احتجت
-      window._chatEnhance = {
-        maybeAutoScroll,
-        isUserAtBottom,
-        updateScrollButtonVisibility
+      // عند تحميل الصفحة، انزل لآخر الرسائل
+      document.addEventListener('DOMContentLoaded', () => {
+        BOT.containers.forEach(c => { try { c.scrollTop = c.scrollHeight; } catch (e) {} });
+      });
+
+      // نعدّل الدالة الأصلية لـ addMessage لتستخدم دالة التمرير التلقائي الجديدة
+      const originalAddMessage = window.addMessage;
+      window.addMessage = function(chatContainer, text, sender) {
+        originalAddMessage(chatContainer, text, sender);
+        maybeAutoScroll(chatContainer);
+        updateScrollButtonVisibility(chatContainer);
       };
+
     })();
   </script>
 
