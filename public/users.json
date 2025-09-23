@@ -1,0 +1,10 @@
+[
+  {
+    "id": "u_demo_1",
+    "username": "demo",
+    "email": "demo@example.com",
+    "pass": "ZGVtbzEyMzQ=", 
+    "role": "user",
+    "notes": "حساب تجريبي"
+  }
+]
