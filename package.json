@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "واجهة هجين: موقع static + Netlify Functions (Gemini + Blobs) لشخصيات روبوتات فريق العون الذكي.",
+  "description": "واجهة هجين: موقع static + Netlify Functions (Gemini) لشخصيات روبوتات فريق العون الذكي.",
   "scripts": {
     "dev": "netlify dev",
     "start": "netlify dev",
@@ -11,8 +11,7 @@
     "serve:static": "npx http-server public -p 8080"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.12.0",
-    "@netlify/blobs": "^6.3.0"
+    "@google/generative-ai": "^0.12.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0",
