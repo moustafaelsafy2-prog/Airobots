@@ -1,205 +1,257 @@
 /*! @file public/admin.js
- *  @version 1.0.0
+ *  @version 2.0.0
  *  @updated 2025-09-23
  *  @owner Mustafa
- *  @notes: منطق لوحة تحكم الأدمن — تسجيل الدخول، CRUD، البحث، وتصفح المستخدمين
+ *  @notes: لوحة تحكم الأدمن — تسجيل الدخول، CRUD للمستخدمين، بحث، فرز، تصدير CSV
  */
 
-const loginSection = document.getElementById("login-section");
-const loginForm = document.getElementById("login-form");
-const loginUsername = document.getElementById("login-username");
-const loginPassword = document.getElementById("login-password");
+// ==================== عناصر DOM ====================
+const loginBox     = document.getElementById("login-box");
+const loginForm    = document.getElementById("login-form");
+const loginMsg     = document.getElementById("login-msg");
+const adminPanel   = document.getElementById("admin-panel");
+const logoutBtn    = document.getElementById("logout-btn");
 
-const adminSection = document.getElementById("admin-section");
-const logoutBtn = document.getElementById("logout-btn");
+const usersTable   = document.querySelector("#users-table tbody");
+const searchInput  = document.getElementById("q");
+const roleFilter   = document.getElementById("roleFilter");
+const exportCsvBtn = document.getElementById("exportCsv");
+const addUserBtn   = document.getElementById("add-user-btn");
 
-const searchInput = document.getElementById("search-input");
-const searchBtn = document.getElementById("search-btn");
-const addUserForm = document.getElementById("add-user-form");
-const newUsername = document.getElementById("new-username");
-const newPassword = document.getElementById("new-password");
+// نافذة تعديل/إضافة
+const modal        = document.getElementById("modal");
+const modalTitle   = document.getElementById("modal-title");
+const mUsername    = document.getElementById("m_username");
+const mEmail       = document.getElementById("m_email");
+const mPass        = document.getElementById("m_pass");
+const mRole        = document.getElementById("m_role");
+const saveBtn      = document.getElementById("save-user");
+const cancelBtn    = document.getElementById("cancel-user");
 
-const usersTable = document.getElementById("users-table");
-const prevPageBtn = document.getElementById("prev-page");
-const nextPageBtn = document.getElementById("next-page");
-const pageInfo = document.getElementById("page-info");
+// بيانات الحالة
+let token   = localStorage.getItem("adminToken") || null;
+let editingId = null;
 
-let token = localStorage.getItem("adminToken") || null;
-let currentPage = 1;
-const limit = 5;
+// ==================== أدوات مساعدة ====================
+function toast(msg, type = "ok") {
+  const box = document.getElementById("toasts");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.style.borderColor = type === "err" ? "#dc2626" : "#10b981";
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
 
-// 🔐 تسجيل الدخول
-loginForm.addEventListener("submit", async (e) => {
+async function api(path, options = {}) {
+  const headers = options.headers || {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (options.body && !(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  const res = await fetch(`/api/${path}`, { ...options, headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "فشل الطلب");
+  }
+  return res.json();
+}
+
+// ==================== تسجيل الدخول/الخروج ====================
+loginForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  try {
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: loginUsername.value,
-        password: loginPassword.value,
-      }),
-    });
+  const username = document.getElementById("admin-user").value.trim();
+  const password = document.getElementById("admin-pass").value;
 
-    if (!res.ok) throw new Error("فشل تسجيل الدخول");
-    const data = await res.json();
+  try {
+    const data = await api("admin-auth", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
     token = data.token;
     localStorage.setItem("adminToken", token);
-
-    loginSection.classList.add("hidden");
-    adminSection.classList.remove("hidden");
+    loginBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+    toast("✅ تم تسجيل الدخول بنجاح");
     loadUsers();
   } catch (err) {
-    alert("⚠️ اسم المستخدم أو كلمة المرور غير صحيحة");
+    loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
     console.error(err);
   }
 });
 
-// 🚪 تسجيل الخروج
-logoutBtn.addEventListener("click", () => {
+logoutBtn?.addEventListener("click", () => {
   token = null;
   localStorage.removeItem("adminToken");
-  adminSection.classList.add("hidden");
-  loginSection.classList.remove("hidden");
+  adminPanel.classList.add("hidden");
+  loginBox.classList.remove("hidden");
+  toast("🚪 تم تسجيل الخروج");
 });
 
-// 📥 تحميل المستخدمين
-async function loadUsers(search = "", page = 1) {
+// ==================== إدارة المستخدمين ====================
+async function loadUsers() {
   try {
-    const res = await fetch(
-      `/api/users?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error("فشل تحميل المستخدمين");
-
-    const data = await res.json();
-    renderUsers(data.data);
-    renderPagination(data.page, data.total, data.limit);
+    const users = await api("users");
+    renderUsers(users);
   } catch (err) {
     console.error(err);
-    alert("⚠️ فشل تحميل المستخدمين");
+    toast("⚠️ فشل تحميل المستخدمين", "err");
   }
 }
 
-// 📋 عرض المستخدمين في الجدول
 function renderUsers(users) {
   usersTable.innerHTML = "";
-  users.forEach((user) => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td class="border p-2 text-sm">${user.id}</td>
-      <td class="border p-2">${user.username}</td>
-      <td class="border p-2 text-sm">${new Date(user.createdAt).toLocaleString()}</td>
-      <td class="border p-2 flex gap-2">
-        <button class="bg-yellow-500 text-white px-2 py-1 rounded text-sm hover:bg-yellow-600"
-          onclick="editUser('${user.id}', '${user.username}')">تعديل</button>
-        <button class="bg-red-600 text-white px-2 py-1 rounded text-sm hover:bg-red-700"
-          onclick="deleteUser('${user.id}')">حذف</button>
+  users.forEach((u) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.username}</td>
+      <td>${u.email || ""}</td>
+      <td>${u.role || "مستخدم"}</td>
+      <td class="row-actions">
+        <button class="btn-ghost" onclick="editUser('${u.id}')">✏️ تعديل</button>
+        <button class="btn-ghost" onclick="deleteUser('${u.id}')">🗑️ حذف</button>
       </td>
     `;
-    usersTable.appendChild(row);
+    usersTable.appendChild(tr);
   });
 }
 
-// 📑 عرض أزرار التصفح
-function renderPagination(page, total, limit) {
-  currentPage = page;
-  const totalPages = Math.ceil(total / limit);
-  pageInfo.textContent = `صفحة ${page} من ${totalPages}`;
+// إضافة مستخدم
+addUserBtn?.addEventListener("click", () => {
+  editingId = null;
+  modalTitle.textContent = "إضافة مستخدم";
+  mUsername.value = "";
+  mEmail.value = "";
+  mPass.value = "";
+  mRole.value = "مستخدم";
+  modal.classList.remove("hidden");
+});
 
-  prevPageBtn.disabled = page <= 1;
-  nextPageBtn.disabled = page >= totalPages;
-}
+saveBtn?.addEventListener("click", async () => {
+  const user = {
+    username: mUsername.value.trim(),
+    email: mEmail.value.trim(),
+    password: mPass.value,
+    role: mRole.value.trim() || "مستخدم",
+  };
 
-prevPageBtn.addEventListener("click", () => {
-  if (currentPage > 1) {
-    loadUsers(searchInput.value, currentPage - 1);
+  if (!user.username || !user.password) {
+    alert("⚠️ يجب إدخال اسم المستخدم وكلمة المرور");
+    return;
   }
-});
-nextPageBtn.addEventListener("click", () => {
-  loadUsers(searchInput.value, currentPage + 1);
-});
 
-// ➕ إضافة مستخدم
-addUserForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
   try {
-    const res = await fetch("/api/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        username: newUsername.value,
-        password: newPassword.value,
-      }),
-    });
-    if (!res.ok) throw new Error("فشل إضافة المستخدم");
-
-    newUsername.value = "";
-    newPassword.value = "";
+    if (editingId) {
+      await api("users", {
+        method: "PUT",
+        body: JSON.stringify({ id: editingId, ...user }),
+      });
+      toast("✏️ تم تحديث المستخدم");
+    } else {
+      await api("users", { method: "POST", body: JSON.stringify(user) });
+      toast("➕ تم إضافة المستخدم");
+    }
+    modal.classList.add("hidden");
     loadUsers();
   } catch (err) {
     console.error(err);
-    alert("⚠️ فشل إضافة المستخدم");
+    toast(err.message, "err");
   }
 });
 
-// ✏️ تعديل مستخدم
-async function editUser(id, currentName) {
-  const newName = prompt("أدخل اسم المستخدم الجديد:", currentName);
-  if (!newName) return;
+cancelBtn?.addEventListener("click", () => modal.classList.add("hidden"));
 
-  const newPass = prompt("أدخل كلمة مرور جديدة (أو اتركها فارغة):");
-
+// تعديل مستخدم
+window.editUser = async function (id) {
   try {
-    const res = await fetch("/api/users", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ id, username: newName, password: newPass || undefined }),
-    });
-    if (!res.ok) throw new Error("فشل تعديل المستخدم");
-
-    loadUsers(searchInput.value, currentPage);
+    const users = await api("users");
+    const u = users.find((x) => x.id === id);
+    if (!u) return;
+    editingId = id;
+    modalTitle.textContent = "تعديل مستخدم";
+    mUsername.value = u.username;
+    mEmail.value = u.email || "";
+    mPass.value = "";
+    mRole.value = u.role || "مستخدم";
+    modal.classList.remove("hidden");
   } catch (err) {
     console.error(err);
-    alert("⚠️ فشل تعديل المستخدم");
+    toast("⚠️ لم يتم العثور على المستخدم", "err");
   }
-}
+};
 
-// 🗑️ حذف مستخدم
-async function deleteUser(id) {
-  if (!confirm("هل أنت متأكد أنك تريد حذف هذا المستخدم؟")) return;
-
+// حذف مستخدم
+window.deleteUser = async function (id) {
+  if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
   try {
-    const res = await fetch(`/api/users?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("فشل حذف المستخدم");
-
-    loadUsers(searchInput.value, currentPage);
+    await api(`users?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    toast("🗑️ تم حذف المستخدم");
+    loadUsers();
   } catch (err) {
     console.error(err);
-    alert("⚠️ فشل حذف المستخدم");
+    toast(err.message, "err");
   }
-}
+};
 
-// 🔍 البحث
-searchBtn.addEventListener("click", () => {
-  loadUsers(searchInput.value, 1);
+// ==================== البحث والتصفية والتصدير ====================
+searchInput?.addEventListener("input", () => {
+  const q = searchInput.value.trim().toLowerCase();
+  filterUsers(q, roleFilter.value);
+});
+roleFilter?.addEventListener("change", () => {
+  filterUsers(searchInput.value.trim().toLowerCase(), roleFilter.value);
 });
 
-// ✅ عند تحميل الصفحة تحقق من وجود جلسة
+function filterUsers(q, role) {
+  api("users")
+    .then((users) => {
+      let f = users.filter((u) => {
+        const hay = [u.username, u.email, u.role].join(" ").toLowerCase();
+        return (!q || hay.includes(q)) && (!role || u.role === role);
+      });
+      renderUsers(f);
+    })
+    .catch((err) => {
+      console.error(err);
+      toast("⚠️ فشل البحث", "err");
+    });
+}
+
+exportCsvBtn?.addEventListener("click", async () => {
+  try {
+    const users = await api("users");
+    if (!users.length) {
+      toast("⚠️ لا يوجد بيانات للتصدير", "err");
+      return;
+    }
+    const head = ["username", "email", "role"];
+    const rows = users.map((u) =>
+      [u.username, u.email || "", u.role || "مستخدم"].map((x) =>
+        `"${String(x).replace(/"/g, '""')}"`
+      )
+    );
+    const csv = [head.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast("⬇️ تم تصدير CSV");
+  } catch (err) {
+    console.error(err);
+    toast("⚠️ فشل التصدير", "err");
+  }
+});
+
+// ==================== عند تحميل الصفحة ====================
 window.addEventListener("DOMContentLoaded", () => {
   if (token) {
-    loginSection.classList.add("hidden");
-    adminSection.classList.remove("hidden");
+    loginBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
     loadUsers();
   }
 });
