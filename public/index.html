@@ -1,0 +1,57 @@
+/*! @file public/index.html
+ *  @version 1.0.0
+ *  @updated 2025-09-23
+ *  @owner Mustafa
+ *  @notes: الصفحة الرئيسية للواجهة — دردشة مع Gemini + تصميم بسيط باستخدام Tailwind
+ */
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>فريق العون الذكي</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-blue-700 text-white p-4 shadow-md">
+    <h1 class="text-xl font-bold text-center">منصة فريق العون الذكي</h1>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-md p-4">
+      <div id="chat-box" class="h-96 overflow-y-auto border border-gray-200 p-3 rounded mb-4 bg-gray-50">
+        <!-- الرسائل ستظهر هنا -->
+      </div>
+
+      <form id="chat-form" class="flex gap-2">
+        <input
+          id="user-input"
+          type="text"
+          class="flex-grow border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="اكتب رسالتك..."
+          required
+        />
+        <button
+          type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          إرسال
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200 text-center text-sm py-3">
+    © 2025 فريق العون الذكي — جميع الحقوق محفوظة
+  </footer>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
