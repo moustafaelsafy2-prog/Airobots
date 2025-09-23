@@ -1,8 +1,8 @@
 /*! @file netlify/functions/admin-auth.js
- *  @version 1.0.0
+ *  @version 2.0.0
  *  @updated 2025-09-23
  *  @owner Mustafa
- *  @notes: تسجيل دخول الأدمن — يتحقق من بيانات الدخول ويصدر JWT
+ *  @notes: تسجيل دخول الأدمن — يتحقق من بيانات الدخول ويصدر JWT آمن مع مدة صلاحية
  */
 
 import { withCORS, generateToken, jsonResponse } from "./_utils.js";
@@ -19,17 +19,27 @@ export const handler = withCORS(async (event) => {
     const { username, password } = JSON.parse(event.body || "{}");
 
     if (!username || !password) {
-      return jsonResponse(400, { error: "يجب إدخال اسم المستخدم وكلمة المرور" });
+      return jsonResponse(400, { error: "⚠️ يجب إدخال اسم المستخدم وكلمة المرور" });
     }
 
+    // التحقق من بيانات الدخول من المتغيرات السرية
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      const token = generateToken({ role: "admin", username });
-      return jsonResponse(200, { token });
+      // صلاحية التوكن: ساعة واحدة
+      const token = generateToken(
+        { role: "admin", username },
+        { expiresIn: "1h" }
+      );
+
+      return jsonResponse(200, {
+        ok: true,
+        token,
+        message: "✅ تم تسجيل الدخول بنجاح",
+      });
     } else {
-      return jsonResponse(401, { error: "بيانات الدخول غير صحيحة" });
+      return jsonResponse(401, { ok: false, error: "❌ بيانات الدخول غير صحيحة" });
     }
   } catch (err) {
-    console.error("❌ Login error:", err);
-    return jsonResponse(500, { error: "حدث خطأ في السيرفر" });
+    console.error("❌ Admin login error:", err);
+    return jsonResponse(500, { ok: false, error: "حدث خطأ داخلي في السيرفر" });
   }
 });
