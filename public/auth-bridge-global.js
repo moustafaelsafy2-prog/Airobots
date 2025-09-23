@@ -1,56 +1,51 @@
 /* auth-bridge-global.js
- * ربط تسجيل الدخول مع مستخدمي Netlify Blobs عبر الوظيفة: /.netlify/functions/users
- * لا يغيّر أي سطر داخل index.html؛ فقط يلتقط حدث الضغط ويتحقق.
- */
+   قراءة المستخدمين من Netlify Function: /.netlify/functions/users
+   دون تعديل أي سطر في index.html — فقط اعتراض زر "دخول" والتحقق.
+*/
+
 (function () {
   const API = '/.netlify/functions/users';
 
-  // -------- Helpers --------
-  function b64d(s){ try{ return atob(s || ''); } catch(_) { return ''; } }
+  // ---------- Helpers ----------
   const norm = s => (s || '').trim().toLowerCase();
-  const ok200 = r => r && r.ok;
-
-  async function fetchUsersCloud(){
-    try{
-      const res = await fetch(API, { method:'GET', cache:'no-store' });
-      const data = await res.json().catch(()=>({}));
-      if (!res.ok || !data.ok || !Array.isArray(data.users)) return [];
-      return data.users;
-    }catch(_){ return []; }
-  }
-
-  // تطابق كلمة المرور سواء مخزنة نصياً أو Base64
+  function b64d(s){ try { return atob(s || ''); } catch(_) { return ''; } }
   function passMatch(stored, input){
     if (stored == null) return false;
+    // ندعم تخزين كلمة المرور كنص عادي أو Base64
     if (stored === input) return true;
     if (b64d(stored) === input) return true;
     return false;
   }
 
-  async function canLogin(username, password){
-    const u = norm(username);
-    // 1) قراءة مباشرة من التخزين السحابي (Netlify Blobs عبر الوظيفة)
-    const cloud = await fetchUsersCloud();
-    const hit = cloud.find(x => norm(x.username) === u);
-    if (hit && passMatch(hit.pass, password)) return true;
-
-    // 2) احتياطي (لو أردت إبقاء الحساب الافتراضي القديم)
-    if (username === 'Aiagent' && password === '2222') return true;
-
-    return false;
+  async function fetchUsers(){
+    try{
+      const res = await fetch(API, { method: 'GET', cache: 'no-store' });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok || !data.ok || !Array.isArray(data.users)) return [];
+      // كاش احتياطي محلي (اختياري)
+      localStorage.setItem('app_users', JSON.stringify(data.users));
+      return data.users;
+    } catch(_) {
+      // fallback: لو الوظيفة غير متاحة مؤقتًا، جرّب الكاش المحلي
+      try { return JSON.parse(localStorage.getItem('app_users') || '[]'); } catch(_) { return []; }
+    }
   }
 
-  // نفس سلوك نجاح الدخول في صفحتك (بدون تغيير بنية الصفحة)
+  async function canLogin(username, password){
+    const users = await fetchUsers();
+    const hit = users.find(u => norm(u.username) === norm(username));
+    return !!(hit && passMatch(hit.pass || hit.password, password));
+  }
+
+  // نفس تدفق النجاح في صفحتك (بدون تغيير DOM الأصلي)
   function onSuccess(){
     const loginModal = document.getElementById('login-modal');
     const mainHeader = document.getElementById('main-header');
     const mainContent = document.getElementById('main-content');
     const setupChatInterface = document.getElementById('setup-chat-interface');
     const dashboardContainer = document.getElementById('dashboard-container');
-    const loginMessage = document.getElementById('login-message');
 
     if (loginModal) loginModal.style.display = 'none';
-    if (loginMessage){ loginMessage.textContent = 'تم تسجيل الدخول بنجاح!'; loginMessage.style.color = '#10b981'; }
 
     if (localStorage.getItem('companyData')) {
       mainContent?.classList.add('hidden');
@@ -65,8 +60,8 @@
       const msgs = document.getElementById('setup-chat-messages');
       if (msgs && !msgs.dataset.injected) {
         const div = document.createElement('div');
-        div.className='chat-message ai-message';
-        div.textContent='مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟';
+        div.className = 'chat-message ai-message';
+        div.textContent = 'مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟';
         msgs.appendChild(div);
         msgs.dataset.injected = '1';
       }
@@ -80,21 +75,31 @@
     const msgEl  = document.getElementById('login-message');
     if (!btn || !userEl || !passEl || !msgEl) return;
 
-    btn.addEventListener('click', async function(e){
+    // اعتراض الزر — دون إزالة مستمعاتك الأصلية
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopImmediatePropagation();
 
       const u = (userEl.value || '').trim();
       const p = passEl.value || '';
 
-      const ok = await canLogin(u, p);
-      if (ok){
-        msgEl.textContent = 'جاري تسجيل الدخول...';
-        msgEl.style.color = '#10b981';
-        setTimeout(onSuccess, 300);
-      } else {
-        msgEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+      msgEl.textContent = 'جاري التحقق...';
+      msgEl.style.color = '#9ca3af';
+
+      try {
+        const ok = await canLogin(u, p);
+        if (ok){
+          msgEl.textContent = 'تم تسجيل الدخول بنجاح!';
+          msgEl.style.color = '#10b981';
+          setTimeout(onSuccess, 300);
+        } else {
+          msgEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+          msgEl.style.color = '#ef4444';
+        }
+      } catch (err) {
+        msgEl.textContent = 'تعذّر الاتصال بالخادم (الوظيفة). حاول لاحقًا.';
         msgEl.style.color = '#ef4444';
+        console.error(err);
       }
     }, true);
   }
