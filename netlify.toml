@@ -1,64 +1,25 @@
-# ================================
-# إعدادات Netlify الأساسية
-# ================================
-
 [build]
-  publish = "public"              # مجلد ملفاتك الثابتة (index.html, admin.html ...)
-  functions = "netlify/functions" # مجلد وظائف Netlify
+  publish = "public"
+  functions = "netlify/functions"
 
 [functions]
-  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["@google/generative-ai"]
 
-[build.environment]
-  NODE_VERSION = "20"             # نسخة Node.js مضمونة ومتوافقة مع Blobs API
-
-# ================================
-# إعادة التوجيه (Redirects)
-# ================================
-
-# اختصار رابط لوحة الأدمن
 [[redirects]]
-  from = "/admin"
-  to   = "/admin.html"
+  from = "/api/chat"
+  to   = "/.netlify/functions/chat"
   status = 200
+  force = true
 
-# دعم Single Page App (اختياري، فعّل إذا أردت روابط داخلية بدون كسر الصفحة)
-# [[redirects]]
-#   from = "/*"
-#   to   = "/index.html"
-#   status = 200
+[[redirects]]
+  from = "/api/users"
+  to   = "/.netlify/functions/users"
+  status = 200
+  force = true
 
-# ================================
-# الترويسات (Headers)
-# ================================
-
-# منع تخزين HTML في الكاش
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-
-# تمكين CORS للوظائف (users.js)
-[[headers]]
-  for = "/.netlify/functions/users"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type"
-
-# منع الكاش لملف users.json إذا استُخدم مباشرة
-[[headers]]
-  for = "/users.json"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-
-# ================================
-# ترويسات أمنية (موصى بها)
-# ================================
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+[[redirects]]
+  from = "/api/admin-auth"
+  to   = "/.netlify/functions/admin-auth"
+  status = 200
+  force = true
