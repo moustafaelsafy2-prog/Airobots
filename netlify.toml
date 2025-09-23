@@ -1,9 +1,64 @@
+# ================================
+# إعدادات Netlify الأساسية
+# ================================
+
 [build]
-  publish = "public"
-  functions = "netlify/functions"
+  publish = "public"              # مجلد ملفاتك الثابتة (index.html, admin.html ...)
+  functions = "netlify/functions" # مجلد وظائف Netlify
 
 [functions]
   directory = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20"             # نسخة Node.js مضمونة ومتوافقة مع Blobs API
+
+# ================================
+# إعادة التوجيه (Redirects)
+# ================================
+
+# اختصار رابط لوحة الأدمن
+[[redirects]]
+  from = "/admin"
+  to   = "/admin.html"
+  status = 200
+
+# دعم Single Page App (اختياري، فعّل إذا أردت روابط داخلية بدون كسر الصفحة)
+# [[redirects]]
+#   from = "/*"
+#   to   = "/index.html"
+#   status = 200
+
+# ================================
+# الترويسات (Headers)
+# ================================
+
+# منع تخزين HTML في الكاش
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# تمكين CORS للوظائف (users.js)
+[[headers]]
+  for = "/.netlify/functions/users"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+# منع الكاش لملف users.json إذا استُخدم مباشرة
+[[headers]]
+  for = "/users.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# ================================
+# ترويسات أمنية (موصى بها)
+# ================================
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
