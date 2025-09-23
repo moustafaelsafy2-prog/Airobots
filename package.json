@@ -1,20 +1,24 @@
 {
-  "name": "airobots",
+  "name": "smart-aid-team",
   "version": "1.0.0",
-  "description": "AI Robots platform with Netlify Functions and Gemini integration",
   "private": true,
   "type": "module",
+  "description": "واجهة هجين: موقع static + Netlify Functions (Gemini) لشخصيات روبوتات فريق العون الذكي.",
   "scripts": {
     "dev": "netlify dev",
-    "build": "echo \"Static build — using public/ as root\"",
-    "start": "netlify dev"
+    "start": "netlify dev",
+    "build": "echo \"No build step\"",
+    "serve:static": "npx http-server public -p 8080"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.16.0"
+    "@google/generative-ai": "^0.12.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0",
+    "esbuild": "^0.19.0",
+    "http-server": "^14.1.1"
   },
   "engines": {
-    "node": ">=18"
-  },
-  "author": "Mustafa",
-  "license": "MIT"
+    "node": ">=18 <=22"
+  }
 }
