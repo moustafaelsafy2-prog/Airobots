@@ -1,13 +1,14 @@
 /*! @file public/admin.js
- *  @version 2.0.0
- *  @updated 2025-09-23
+ *  @version 2.0.1
+ *  @updated 2025-09-24
  *  @owner Mustafa
- *  @notes: لوحة تحكم الأدمن — تسجيل الدخول، CRUD للمستخدمين، بحث، فرز، تصدير CSV
+ *  @notes: لوحة تحكم الأدمن — تسجيل الدخول، CRUD للمستخدمين، بحث، فرز، تصدير CSV (متوافق مع { ok, users })
  */
 
 // ==================== عناصر DOM ====================
 const loginBox     = document.getElementById("login-box");
-const loginForm    = document.getElementById("login-form");
+const loginForm    = document.getElementById("login-form");   // قد لا يكون موجودًا في بعض القوالب
+const loginBtnEl   = document.getElementById("login-btn");     // زر الدخول البديل
 const loginMsg     = document.getElementById("login-msg");
 const adminPanel   = document.getElementById("admin-panel");
 const logoutBtn    = document.getElementById("logout-btn");
@@ -51,18 +52,31 @@ async function api(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
   const res = await fetch(`/api/${path}`, { ...options, headers });
+  // نسمح برسائل الخطأ النصّية أيضًا
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "فشل الطلب");
+    let errMsg = "فشل الطلب";
+    try { const err = await res.json(); errMsg = err.error || errMsg; } catch {}
+    throw new Error(errMsg);
   }
   return res.json();
 }
 
+// تحويل عرض الدور لتوافق الفلتر والواجهات العربية
+function displayRole(role) {
+  if (!role) return "مستخدم";
+  const s = String(role).toLowerCase();
+  if (s === "user") return "مستخدم";
+  if (s === "admin" || s === "مشرف") return "مشرف";
+  return role; // أي قيمة مخصصة تبقى كما هي
+}
+
 // ==================== تسجيل الدخول/الخروج ====================
-loginForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const username = document.getElementById("admin-user").value.trim();
-  const password = document.getElementById("admin-pass").value;
+async function handleLogin(e) {
+  e?.preventDefault?.();
+  const uEl = document.getElementById("admin-user");
+  const pEl = document.getElementById("admin-pass");
+  const username = (uEl?.value || "").trim();
+  const password = pEl?.value || "";
 
   try {
     const data = await api("admin-auth", {
@@ -71,28 +85,33 @@ loginForm?.addEventListener("submit", async (e) => {
     });
     token = data.token;
     localStorage.setItem("adminToken", token);
-    loginBox.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
+    loginBox?.classList.add("hidden");
+    adminPanel?.classList.remove("hidden");
     toast("✅ تم تسجيل الدخول بنجاح");
     loadUsers();
   } catch (err) {
-    loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
+    if (loginMsg) loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
     console.error(err);
   }
-});
+}
+
+// يدعم نموذج أو زر
+loginForm?.addEventListener("submit", handleLogin);
+loginBtnEl?.addEventListener("click", handleLogin);
 
 logoutBtn?.addEventListener("click", () => {
   token = null;
   localStorage.removeItem("adminToken");
-  adminPanel.classList.add("hidden");
-  loginBox.classList.remove("hidden");
+  adminPanel?.classList.add("hidden");
+  loginBox?.classList.remove("hidden");
   toast("🚪 تم تسجيل الخروج");
 });
 
 // ==================== إدارة المستخدمين ====================
 async function loadUsers() {
   try {
-    const users = await api("users");
+    const payload = await api("users");
+    const users = payload.users || payload; // دعم في حال رجع مصفوفة مباشرة
     renderUsers(users);
   } catch (err) {
     console.error(err);
@@ -107,7 +126,7 @@ function renderUsers(users) {
     tr.innerHTML = `
       <td>${u.username}</td>
       <td>${u.email || ""}</td>
-      <td>${u.role || "مستخدم"}</td>
+      <td>${displayRole(u.role)}</td>
       <td class="row-actions">
         <button class="btn-ghost" onclick="editUser('${u.id}')">✏️ تعديل</button>
         <button class="btn-ghost" onclick="deleteUser('${u.id}')">🗑️ حذف</button>
@@ -132,7 +151,7 @@ saveBtn?.addEventListener("click", async () => {
   const user = {
     username: mUsername.value.trim(),
     email: mEmail.value.trim(),
-    password: mPass.value,
+    password: mPass.value,                  // الخادم يقبل password أو pass(Base64)
     role: mRole.value.trim() || "مستخدم",
   };
 
@@ -165,15 +184,16 @@ cancelBtn?.addEventListener("click", () => modal.classList.add("hidden"));
 // تعديل مستخدم
 window.editUser = async function (id) {
   try {
-    const users = await api("users");
+    const payload = await api("users");
+    const users = payload.users || payload;
     const u = users.find((x) => x.id === id);
     if (!u) return;
     editingId = id;
     modalTitle.textContent = "تعديل مستخدم";
     mUsername.value = u.username;
     mEmail.value = u.email || "";
-    mPass.value = "";
-    mRole.value = u.role || "مستخدم";
+    mPass.value = "";                        // لا نملأ كلمة المرور
+    mRole.value = displayRole(u.role);       // نعرضه بالعربية
     modal.classList.remove("hidden");
   } catch (err) {
     console.error(err);
@@ -197,7 +217,7 @@ window.deleteUser = async function (id) {
 // ==================== البحث والتصفية والتصدير ====================
 searchInput?.addEventListener("input", () => {
   const q = searchInput.value.trim().toLowerCase();
-  filterUsers(q, roleFilter.value);
+  filterUsers(q, roleFilter?.value || "");
 });
 roleFilter?.addEventListener("change", () => {
   filterUsers(searchInput.value.trim().toLowerCase(), roleFilter.value);
@@ -205,10 +225,11 @@ roleFilter?.addEventListener("change", () => {
 
 function filterUsers(q, role) {
   api("users")
-    .then((users) => {
+    .then((payload) => {
+      const users = payload.users || payload;
       let f = users.filter((u) => {
-        const hay = [u.username, u.email, u.role].join(" ").toLowerCase();
-        return (!q || hay.includes(q)) && (!role || u.role === role);
+        const hay = [u.username, u.email, displayRole(u.role)].join(" ").toLowerCase();
+        return (!q || hay.includes(q)) && (!role || displayRole(u.role) === role);
       });
       renderUsers(f);
     })
@@ -220,14 +241,15 @@ function filterUsers(q, role) {
 
 exportCsvBtn?.addEventListener("click", async () => {
   try {
-    const users = await api("users");
+    const payload = await api("users");
+    const users = payload.users || payload;
     if (!users.length) {
       toast("⚠️ لا يوجد بيانات للتصدير", "err");
       return;
     }
     const head = ["username", "email", "role"];
     const rows = users.map((u) =>
-      [u.username, u.email || "", u.role || "مستخدم"].map((x) =>
+      [u.username, u.email || "", displayRole(u.role)].map((x) =>
         `"${String(x).replace(/"/g, '""')}"`
       )
     );
@@ -250,8 +272,8 @@ exportCsvBtn?.addEventListener("click", async () => {
 // ==================== عند تحميل الصفحة ====================
 window.addEventListener("DOMContentLoaded", () => {
   if (token) {
-    loginBox.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
+    loginBox?.classList.add("hidden");
+    adminPanel?.classList.remove("hidden");
     loadUsers();
   }
 });
