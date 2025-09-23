@@ -1,61 +1,9 @@
-# ===== Build =====
 [build]
-  # مجلد ملفاتك الثابتة
   publish = "public"
-  # مسار وظائف Netlify
   functions = "netlify/functions"
 
-[build.environment]
-  # تأكد من نسخة Node المتوافقة مع Functions و Blobs
-  NODE_VERSION = "20"
-
-# ===== Functions =====
 [functions]
   directory = "netlify/functions"
-  # اختياري: مهلة وتنفيذ أكبر لو أردت
-  # node_bundler = "esbuild"
-  # external_node_modules = []
 
-# ===== Redirects (روابط مختصرة) =====
-# فتح صفحة الأدمن عبر /admin
-[[redirects]]
-  from = "/admin"
-  to   = "/admin.html"
-  status = 200
-
-# توجيه SPA إن لزم (إن أردت بقاء روابط داخلية تعمل على الريلود)
-# [[redirects]]
-#   from = "/*"
-#   to   = "/index.html"
-#   status = 200
-#   force = false
-
-# ===== Headers (كاش و CORS مبسط للوظائف) =====
-# عدم تخزين HTML في الكاش
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-
-# تمكين CORS لواجهة المستخدمين
-[[headers]]
-  for = "/.netlify/functions/users"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type"
-
-# ملفات JSON (إن وجدت) لا تُخزَّن بقوة
-[[headers]]
-  for = "/users.json"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-
-# ===== Security (اختياري جيد) =====
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+[build.environment]
+  NODE_VERSION = "20"
