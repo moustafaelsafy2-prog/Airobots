@@ -1,120 +1,104 @@
 /*! @file netlify/functions/chat.js
- *  واجهة آمنة لـ Gemini مع تخصيص "الشخصية" وسياق الشركة + تحسينات احترافية
+ *  @version 1.0.1
+ *  @updated 2025-09-23
+ *  واجهة آمنة لـ Gemini مع تخصيص "الشخصية" وسياق الشركة + دعم مرفقات
  */
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { withCORS, jsonResponse, safeParse } from "./_utils.js";
 
-// اسم النموذج يمكن تغييره من متغير بيئة إن وُجد
-const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-1.5-pro";
+/** اختر الموديل الافتراضي (يمكن تغييره من متغير بيئة) */
+const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-1.5-flash";
 
+/** إعدادات التوليد */
 const generationConfig = {
   temperature: 0.6,
   topK: 32,
   topP: 0.95,
   maxOutputTokens: 1024,
-  responseMimeType: "text/markdown", // إخراج منسّق
-};
-
-// إعدادات الأمان (يمكن تعديلها حسب الحاجة)
-const safetySettings = [
-  // أمثلة—اتركها افتراضيًا إن رغبت. يمكن توسعتها لاحقًا.
-  // { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
-  // { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-];
-
-const LIMITS = {
-  MAX_MESSAGES: 24,            // أقصى عدد رسائل نمرّرها للنموذج
-  MAX_FILES: 4,                // أقصى عدد ملفات
-  MAX_FILE_BYTES: 5 * 1024 * 1024, // 5MB لكل ملف
 };
 
 export const handler = withCORS(async (event) => {
+  // نسمح فقط بالـ POST
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { error: "Method Not Allowed" });
   }
 
+  // مفتاح Gemini
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("Missing GEMINI_API_KEY");
+    console.error("❌ Missing GEMINI_API_KEY");
     return jsonResponse(500, { error: "GEMINI_API_KEY is not configured" });
   }
 
-  // نقرأ الجسم بأمان + دعم meta.company
-  const body = safeParse(event.body, {});
+  // قراءة الـ payload بأمان
   const {
     messages = [],
     persona = "",
-    company: companyRaw = {},
+    company = {},
     files = [],
-    meta = {},
-  } = body;
+  } = safeParse(event.body, {});
 
-  const company = Object.keys(companyRaw || {}).length
-    ? companyRaw
-    : (meta && meta.company) || {};
-
-  // تحقق من المدخلات
   if (!Array.isArray(messages) || messages.length === 0) {
     return jsonResponse(400, { error: "messages[] is required" });
   }
-  if (!Array.isArray(files)) {
-    return jsonResponse(400, { error: "files[] must be an array" });
+
+  // نبني مطالبة النظام بحسب الشخصية وسياق الشركة
+  const systemPrompt = buildSystemPrompt(persona, company);
+
+  /** نبني contents كما تتوقع مكتبة Gemini:
+   *  الأدوار المقبولة: "user" و "model"
+   *  نترجم assistant => model لضمان صحة الحوار
+   */
+  const contents = [];
+
+  // 1) نبدأ برسالة "user" تحتوي على System Prompt (تعليمات الدور)
+  contents.push({
+    role: "user",
+    parts: [{ text: systemPrompt }],
+  });
+
+  // 2) نضيف المحادثة السابقة بدقة أدوارها
+  for (const m of messages) {
+    const role = m?.role === "assistant" ? "model" : "user";
+    const text = typeof m?.text === "string" ? m.text : "";
+    if (!text) continue;
+
+    // دمج الرسائل المتتالية من نفس الدور في جزء واحد أبسط
+    const last = contents[contents.length - 1];
+    if (last && last.role === role) {
+      last.parts.push({ text });
+    } else {
+      contents.push({ role, parts: [{ text }] });
+    }
   }
 
-  // تقليم المحادثة لتجنّب تضخّم السياق
-  const trimmedMessages = messages.slice(-LIMITS.MAX_MESSAGES).map((m) => ({
-    role: m.role === "assistant" ? "assistant" : "user",
-    text: typeof m.text === "string" ? m.text : "",
-  }));
-
-  // فحص الملفات (اختياري)
-  const safeFiles = [];
-  for (const f of files.slice(0, LIMITS.MAX_FILES)) {
-    if (!f?.mime || !f?.base64) continue;
-    try {
-      const bytes = Buffer.from(f.base64, "base64");
-      if (bytes.length > LIMITS.MAX_FILE_BYTES) {
-        return jsonResponse(413, {
-          error: `File too large (> ${Math.round(LIMITS.MAX_FILE_BYTES / (1024 * 1024))}MB): ${f.name || f.mime}`,
+  // 3) دعم مرفقات الملفات (inlineData) — نرفقها مع آخر رسالة "user" إن وجدت، وإلا ننشئ رسالة user جديدة
+  if (Array.isArray(files) && files.length) {
+    let target = contents.findLast?.((c) => c.role === "user");
+    if (!target) {
+      target = { role: "user", parts: [] };
+      contents.push(target);
+    }
+    for (const f of files) {
+      if (f?.mime && f?.base64) {
+        target.parts.push({
+          inlineData: { data: f.base64, mimeType: f.mime },
         });
       }
-      safeFiles.push({ mimeType: f.mime, data: f.base64 });
-    } catch {
-      // تجاهل الملف غير الصالح
     }
   }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-
-    // نبني System Instruction احترافي
-    const systemInstruction = buildSystemPrompt(persona, company);
-
     const model = genAI.getGenerativeModel({
       model: MODEL_ID,
       generationConfig,
-      safetySettings,
-      systemInstruction, // تعليمات النظام الرسمية
     });
 
-    // نبني الأجزاء (المحادثة + مرفقات)
-    const parts = [
-      {
-        text:
-          "هذه محادثة تتضمن user/assistant. التزم بالتنسيق العملي المختصر.\n" +
-          trimmedMessages
-            .map((m) => `${m.role === "assistant" ? "Assistant" : "User"}: ${m.text}`)
-            .join("\n") +
-          "\nAssistant:",
-      },
-    ];
-
-    // إلحاق الملفات (إن وُجدت)
-    safeFiles.forEach((f) => parts.push({ inlineData: { data: f.data, mimeType: f.mimeType } }));
-
-    const contents = [{ role: "user", parts }];
-
+    // نطلب التوليد مباشرة دون حشو "Assistant:" أو أدوار غير مدعومة
     const result = await model.generateContent({ contents });
+
     const text =
       (result?.response && typeof result.response.text === "function"
         ? result.response.text()
@@ -122,65 +106,82 @@ export const handler = withCORS(async (event) => {
 
     return jsonResponse(200, { text });
   } catch (err) {
-    // أخطاء مقروءة للمستهلك
-    const code = err?.status || err?.code || "unknown";
-    const msg =
+    // معالجة أخطاء مقروءة
+    const status = err?.status || err?.code || 500;
+    const message =
       err?.message?.toString?.() ||
       (typeof err === "string" ? err : "Gemini request failed");
 
-    // سجل مبسّط (تجنّب طباعة الجسم)
-    console.error("❌ Gemini error:", code, msg);
+    // بعض أخطاء 400 تأتي من content غير صحيح — نطبع محتويات مختصرة للتشخيص في اللوج فقط
+    try {
+      console.error("❌ Gemini error:", status, message, {
+        model: MODEL_ID,
+        hasFiles: Array.isArray(files) && files.length > 0,
+        turns: contents.length,
+        lastTurnRole: contents[contents.length - 1]?.role,
+        lastTurnParts: contents[contents.length - 1]?.parts?.length,
+      });
+    } catch {}
 
-    return jsonResponse(500, {
-      error: "Gemini request failed",
-      code,
-      details: process.env.NODE_ENV === "development" ? msg : undefined,
-    });
+    return jsonResponse(
+      typeof status === "number" ? status : 500,
+      {
+        error: "Gemini request failed",
+        code: typeof status === "number" ? status : 500,
+        // أظهر التفاصيل في وضع التطوير فقط
+        details:
+          process.env.NODE_ENV === "development" ? String(message) : undefined,
+      }
+    );
   }
 });
 
+/** بناء مطالبة النظام مع شخصية + سياق الشركة */
 function buildSystemPrompt(persona = "", company = {}) {
   const base =
-    "أنت مستشار عربي محترف يكتب بإيجاز وتنظيم (عناوين فرعية، نقاط، خطوات، جداول/كود عند الحاجة). " +
-    "اسأل أسئلة استيضاحية قصيرة فقط إن كانت المعلومات ناقصة، ثم قدّم خطة تنفيذ واضحة قابلة للتطبيق. " +
-    "تجنّب الحشو والعموميات؛ اجعل كل سطر عمليًا. اكتب بصياغة ودودة ولكن حاسمة.";
+    "أنت مستشار عربي محترف يجيب بإيجاز وتنظيم (عناوين فرعية، نقاط، خطوات، أمثلة عملية)، " +
+    "تسأل سؤال/سؤالين استيضاحيين فقط إن كانت المعلومات ناقصة، ثم تقدّم خطة تنفيذ مختصرة قابلة للتطبيق. " +
+    "تجنّب الحشو والعموميات وركّز على نتائج قابلة للقياس.";
 
   const org =
     company && Object.keys(company).length
-      ? `\n[سياق الشركة]\n- الاسم: ${company.name || "غير محدد"}\n- المجال: ${
-          company.industry || "غير محدد"
-        }\n- الحجم: ${company.size || "غير محدد"}\n- الجمهور: ${
-          company.audience || "غير محدد"
-        }\n- الأهداف: ${company.goals || "غير محدد"}\n`
+      ? [
+          "[سياق الشركة]",
+          `- الاسم: ${company.name || "غير محدد"}`,
+          `- المجال: ${company.industry || "غير محدد"}`,
+          `- الحجم: ${company.size || "غير محدد"}`,
+          `- الجمهور: ${company.audience || "غير محدد"}`,
+          `- الأهداف: ${company.goals || "غير محدد"}`,
+        ].join("\n")
       : "";
 
   const personas = {
     "ألفا (Alfa)":
-      "الدور: خبير تسويق رقمي (بحث كلمات مفتاحية، ICP، رسائل قيمة، قنوات اكتساب، قمع مبيعات، A/B، تتبع وتحليلات). أخرج مخططات حملات، تقاويم محتوى، ونماذج رسائل.",
+      "الدور: خبير تسويق رقمي (SEO/SEM، ICP، رسائل قيمة، قنوات اكتساب، قمع، A/B، تتبع). أخرج مخططات حملات وتقاويم محتوى ورسائل.",
     "فيزي (Vizi)":
-      "الدور: خبير مبيعات B2B/B2C (Discovery، عروض قيمة، اعتراضات، تأهيل، CRM، مؤشرات). أخرج Playbooks ورسائل بريد/واتساب ونصوص مكالمات.",
+      "الدور: خبير مبيعات (Discovery، عروض قيمة، اعتراضات، تأهيل، CRM، KPIs). أخرج Playbooks ورسائل بريد/واتساب ونصوص مكالمات.",
     "كورتكس (Cortex)":
       "الدور: خبير مالي (ميزانيات، تدفق نقدي، تسعير، KPIs، لوحات). أخرج جداول/معادلات وخطوات تنفيذ.",
     "ليكس (Lex)":
-      "الدور: خدمة عملاء (SLA، قوالب ردود، إدارة الشكاوى، CSAT/CRM). أخرج سكربتات وإجراءات تصعيد.",
+      "الدور: خدمة عملاء (SLA، قوالب ردود، إدارة شكاوى، CSAT). أخرج سكربتات وإجراءات تصعيد.",
     "أوكتو (Octo)":
-      "الدور: عمليات (SOPs، أتمتة، خرائط سير عمل، أدوات). أخرج SOPs خطوة بخطوة وقائمة أدوات.",
+      "الدور: عمليات (SOPs، أتمتة، خرائط سير عمل). أخرج SOPs خطوة بخطوة وقائمة أدوات.",
     "مينا (Mina)":
-      "الدور: تحليل بيانات (تنظيف، مؤشرات، رؤى قابلة للتنفيذ، لوحات). أخرج أسئلة فرضيات وخطة استخراج بيانات.",
+      "الدور: تحليل بيانات (تنظيف، مؤشرات، رؤى قابلة للتنفيذ، لوحات). أخرج أسئلة فرضيات وخطة استخراج.",
     "بولت (Bolt)":
-      "الدور: إدارة مشاريع (نطاق/زمن/تكلفة/مخاطر، Gantt، WBS). أخرج خطة أسبوعية ومخاطر وتخفيف.",
+      "الدور: إدارة مشاريع (نطاق/زمن/تكلفة/مخاطر، WBS، جانت). أخرج خطة أسبوعية ومصفوفة مخاطر.",
     "ريكس (Rex)":
-      "الدور: إدارة مالية تشغيلية (موازنات أقسام، رقابة تكاليف، توفير). أخرج سياسات صرف وبنود خفض تكلفة.",
+      "الدور: إدارة مالية تشغيلية (موازنات أقسام، رقابة تكاليف). أخرج سياسات صرف وبنود خفض تكلفة.",
     "بادي (Buddy)":
-      "الدور: علاقات عامة (رسائل، تغطيات، مؤثرون، بيان صحفي). أخرج حزمة محتوى وقوالب.",
+      "الدور: علاقات عامة (رسائل، مؤثرون، بيان صحفي). أخرج حزمة محتوى وقوالب.",
     "روفر (Rover)":
-      "الدور: CRM ولاء (تقسيم شرائح، رحلات عميل، عروض). أخرج Segments وسيناريوهات Journey.",
+      "الدور: CRM ولاء (تقسيم شرائح، رحلات عميل). أخرج Segments وسيناريوهات Journey.",
     "فالور (Valor)":
-      "الدور: تجارة إلكترونية (CRO، صفحات المنتج، سلة/دفع، مخزون). أخرج تشخيص صفحات وخطة اختبارات.",
+      "الدور: تجارة إلكترونية (CRO، صفحات المنتج، السلة/الدفع، مخزون). أخرج تشخيص صفحات وخطة اختبارات.",
     "زينيث (Zenith)":
-      "الدور: ابتكار/منتج (أفكار، MVP، منافسون، خارطة طريق). أخرج Canvas وخطة تحقق من الفرضيات.",
+      "الدور: ابتكار/منتج (أفكار، MVP، منافسون، خارطة طريق). أخرج Canvas وخطة تحقق.",
   };
 
   const role = personas[persona] || "";
-  return [base, org, role].filter(Boolean).join("\n");
+  return [base, org, role].filter(Boolean).join("\n\n");
 }
