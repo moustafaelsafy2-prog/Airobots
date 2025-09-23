@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>لوحة الأدمن — إدارة المستخدمين</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة الأدمن — إدارة المستخدمين (ستاتيكي)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root{--bg:#0d1117;--card:#161b22;--muted:#9ca3af;--accent1:#60a5fa;--accent2:#8b5cf6;--success:#10b981;--danger:#ef4444}
     *{box-sizing:border-box;font-family:'Cairo',sans-serif}
@@ -13,7 +13,6 @@
     .card{background:var(--card);border:1px solid #2b3036;border-radius:12px;padding:18px;box-shadow:0 6px 22px rgba(2,6,23,.6)}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
     h1{margin:0;font-size:20px}
-    .login-area{max-width:420px;margin:0 auto}
     label{display:block;color:var(--muted);margin:8px 0 6px}
     input,select,button,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #2b3036;background:#0f1418;color:#fff}
     button{cursor:pointer}
@@ -26,109 +25,87 @@
     .table th,.table td{padding:10px;border-bottom:1px solid #222;text-align:right;color:#d1d5db}
     .small{font-size:13px;color:var(--muted)}
     .actions button{margin-left:6px}
-    .search-row{display:flex;gap:8px;margin-bottom:12px}
+    .search-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
     .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:#0f1720;border:1px solid #222;color:var(--muted);font-size:13px}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.6);display:flex;align-items:center;justify-content:center;z-index:999}
-    .modal{width:100%;max-width:720px;background:var(--card);padding:18px;border-radius:10px}
-    .row{display:flex;gap:10px;margin-bottom:10px}
-    .col{flex:1}
     .msg{padding:8px;border-radius:8px;margin:6px 0;font-size:14px}
     .msg.success{background:#052b1f;color:var(--success)}
     .msg.error{background:#2b0b0b;color:var(--danger)}
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
       <header>
-        <h1>لوحة الأدمن — إدارة المستخدمين</h1>
-        <div class="top-actions" id="topActions"></div>
+        <h1>لوحة الأدمن — إدارة المستخدمين (ستاتيكي)</h1>
+        <div>
+          <a href="index.html" class="btn-ghost">الصفحة الرئيسية</a>
+        </div>
       </header>
 
-      <!-- LOGIN -->
-      <div id="loginView" class="login-area">
-        <div class="card" style="padding:16px">
-          <label>اسم المستخدم (أدمن)</label>
-          <input id="adminUsername" placeholder="admin">
-          <label>كلمة المرور</label>
-          <input id="adminPassword" type="password" placeholder="Admin@2025">
-          <div style="margin-top:12px" class="flex">
-            <button id="loginBtn" class="btn-primary">تسجيل دخول</button>
-            <button id="resetDemoBtn" class="btn-ghost">تهيئة بيانات تجريبية</button>
-          </div>
-          <div id="loginMsg"></div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="search-row">
+          <input id="searchInput" placeholder="ابحث باسم المستخدم أو البريد..." />
+          <select id="filterRole">
+            <option value="">كل الأدوار</option>
+            <option value="user">مستخدم</option>
+            <option value="manager">مدير</option>
+            <option value="editor">محرر</option>
+          </select>
+          <button id="addUserBtn" class="btn-primary" style="width:150px">إضافة مستخدم</button>
+
+          <button id="loadGlobalBtn" class="btn-ghost" title="قراءة users.json">تحميل من users.json</button>
+          <button id="exportBtn" class="btn-ghost" title="تصدير JSON وحفظه كـ users.json">تصدير JSON</button>
+          <input type="file" id="importFile" class="hidden" accept=".json" />
+          <button id="importBtn" class="btn-ghost">استيراد JSON</button>
         </div>
+        <div class="small">نمط التخزين: محلي عبر <code>localStorage</code> + ملف عالمي اختياري <code>users.json</code>.</div>
       </div>
 
-      <!-- DASHBOARD -->
-      <div id="dashboardView" class="hidden">
-        <div class="flex space-between" style="margin-bottom:12px">
-          <div class="chip">مسجل كأدمن: <span id="loggedAdmin" style="margin-inline-start:8px;color:#fff"></span></div>
-          <button id="logoutBtn" class="btn-ghost">تسجيل خروج</button>
-        </div>
-
-        <div class="card" style="margin-bottom:12px;padding:12px">
-          <div class="search-row">
-            <input id="searchInput" placeholder="ابحث باسم المستخدم أو البريد...">
-            <select id="filterRole">
-              <option value="">كل الأدوار</option>
-              <option value="user">مستخدم</option>
-              <option value="manager">مدير</option>
-              <option value="editor">محرر</option>
-            </select>
-            <button id="addUserBtn" class="btn-primary" style="width:160px">إضافة مستخدم</button>
-            <button id="exportBtn" class="btn-ghost" style="width:120px">تصدير JSON</button>
-            <input type="file" id="importFile" class="hidden" accept=".json">
-            <button id="importBtn" class="btn-ghost" style="width:120px">استيراد JSON</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <table class="table" id="usersTable" aria-live="polite">
-            <thead>
-              <tr>
-                <th>اسم المستخدم</th>
-                <th>البريد</th>
-                <th>الدور</th>
-                <th>ملاحظات</th>
-                <th style="width:220px;text-align:center">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody id="usersTbody"></tbody>
-          </table>
-          <div id="tableMsg" class="small" style="margin-top:10px"></div>
-        </div>
+      <div class="card">
+        <table class="table" id="usersTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th>اسم المستخدم</th>
+              <th>البريد</th>
+              <th>الدور</th>
+              <th>ملاحظات</th>
+              <th style="width:220px;text-align:center">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+        <div id="tableMsg" class="small" style="margin-top:10px"></div>
       </div>
     </div>
 
     <footer>
-      فتح الصفحة بعد النشر: <code>/admin.html</code> — التخزين محلي عبر <code>localStorage</code>.
+      حدّث ملف <code>users.json</code> في الريبو ليتاح للجميع عبر أي متصفح.  
+      كلمات المرور مخزّنة Base64 لأغراض الـ MVP فقط.
     </footer>
   </div>
 
-  <!-- MODAL -->
-  <div id="userModalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal card">
-      <h3 id="modalTitle">إضافة مستخدم جديد</h3>
+  <!-- Modal بسيط للإضافة/التعديل -->
+  <div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center">
+    <div class="card" style="width:95%;max-width:700px">
+      <h3 id="modalTitle">إضافة مستخدم</h3>
       <div id="modalMsg"></div>
-      <div class="row">
-        <div class="col">
+      <div class="flex" style="flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
           <label>اسم المستخدم</label>
-          <input id="m_username" placeholder="username">
+          <input id="m_username" placeholder="username" />
         </div>
-        <div class="col">
-          <label>البريد الإلكتروني</label>
-          <input id="m_email" placeholder="example@mail.com">
+        <div style="flex:1;min-width:260px">
+          <label>البريد</label>
+          <input id="m_email" placeholder="example@mail.com" />
         </div>
       </div>
-      <div class="row">
-        <div class="col">
+      <div class="flex" style="flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
           <label>كلمة المرور</label>
-          <input id="m_password" type="password" placeholder="password">
+          <input id="m_password" type="password" placeholder="password" />
         </div>
-        <div class="col">
+        <div style="flex:1;min-width:260px">
           <label>الدور</label>
           <select id="m_role">
             <option value="user">مستخدم</option>
@@ -137,9 +114,9 @@
           </select>
         </div>
       </div>
-      <label>ملاحظات (اختياري)</label>
-      <textarea id="m_notes" rows="3" placeholder="ملاحظات"></textarea>
-      <div style="margin-top:12px" class="flex">
+      <label>ملاحظات</label>
+      <textarea id="m_notes" rows="3" placeholder="ملاحظات اختيارية"></textarea>
+      <div class="flex" style="margin-top:10px">
         <button id="saveUserBtn" class="btn-primary">حفظ</button>
         <button id="cancelUserBtn" class="btn-ghost">إلغاء</button>
       </div>
@@ -147,24 +124,7 @@
   </div>
 
 <script>
-/* إعدادات الأدمن (محلياً) */
-const ADMIN = { username:'admin', password:'Admin@2025' };
-
-/* مفاتيح التخزين */
-const LS_USERS = 'app_users';         // قائمة المستخدمين (للدخول من الصفحة الرئيسية)
-const LS_ADMIN_SESSION = 'admin_session';
-
-/* عناصر DOM */
-const loginView = document.getElementById('loginView');
-const dashboardView = document.getElementById('dashboardView');
-const adminUsername = document.getElementById('adminUsername');
-const adminPassword = document.getElementById('adminPassword');
-const loginBtn = document.getElementById('loginBtn');
-const loginMsg = document.getElementById('loginMsg');
-const loggedAdmin = document.getElementById('loggedAdmin');
-const logoutBtn = document.getElementById('logoutBtn');
-const resetDemoBtn = document.getElementById('resetDemoBtn');
-
+const LS_USERS = 'app_users';
 const usersTbody = document.getElementById('usersTbody');
 const tableMsg = document.getElementById('tableMsg');
 const searchInput = document.getElementById('searchInput');
@@ -173,8 +133,9 @@ const addUserBtn = document.getElementById('addUserBtn');
 const exportBtn = document.getElementById('exportBtn');
 const importBtn = document.getElementById('importBtn');
 const importFile = document.getElementById('importFile');
+const loadGlobalBtn = document.getElementById('loadGlobalBtn');
 
-const userModalBackdrop = document.getElementById('userModalBackdrop');
+const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const modalMsg = document.getElementById('modalMsg');
 const m_username = document.getElementById('m_username');
@@ -187,57 +148,34 @@ const cancelUserBtn = document.getElementById('cancelUserBtn');
 
 let editId = null;
 
-/* Helpers */
-function loadUsers(){ try{ return JSON.parse(localStorage.getItem(LS_USERS)||'[]'); }catch(e){ return []; } }
-function saveUsers(arr){ localStorage.setItem(LS_USERS, JSON.stringify(arr)); }
 function genId(){ return 'u_'+Math.random().toString(36).slice(2,9); }
-function b64(s){ return btoa(s||''); }
-function b64d(s){ try{ return atob(s||''); }catch(e){ return ''; } }
+function loadUsers(){ try{ return JSON.parse(localStorage.getItem(LS_USERS) || '[]'); } catch(e){ return []; } }
+function saveUsers(arr){ localStorage.setItem(LS_USERS, JSON.stringify(arr)); }
 function esc(s=''){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-function toast(msg,type='success'){ const el=document.createElement('div'); el.className='msg '+(type==='success'?'success':'error'); el.textContent=msg; document.querySelector('.container').prepend(el); setTimeout(()=>el.remove(),2500); }
+function b64(s){ return btoa(s || ''); }
+function b64d(s){ try{ return atob(s || ''); } catch(e){ return ''; } }
 
-/* Demo data */
-function seedDemo(){
-  const demo = [
-    {id:genId(), username:'moustafa', email:'moustafa@example.com', pass:b64('pass1234'), role:'manager', notes:'مدير المشروع'},
-    {id:genId(), username:'sara',      email:'sara@example.com',      pass:b64('sara2024'), role:'user',    notes:'تسويق'},
-    {id:genId(), username:'khaled',    email:'khaled@example.com',    pass:b64('khaled321'),role:'editor',  notes:''}
-  ];
-  saveUsers(demo);
-  toast('تم إنشاء بيانات تجريبية','success');
-  render();
-}
-
-/* Admin login */
-loginBtn.addEventListener('click', ()=>{
-  const u = adminUsername.value.trim();
-  const p = adminPassword.value;
-  if(u===ADMIN.username && p===ADMIN.password){
-    localStorage.setItem(LS_ADMIN_SESSION, JSON.stringify({u, ts:Date.now()}));
-    showDashboard(u);
-  } else {
-    loginMsg.innerHTML = '<div class="msg error">بيانات الأدمن غير صحيحة</div>';
-    setTimeout(()=>loginMsg.innerHTML='',3000);
+async function loadGlobalUsers(){
+  try{
+    const res = await fetch('users.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('لا يمكن قراءة users.json');
+    const arr = await res.json();
+    alert('تم تحميل '+arr.length+' مستخدم من users.json (قراءة فقط). لا يُخزَّنون تلقائيًا محليًا.');
+    return arr;
+  } catch(e){
+    alert(e.message);
+    return [];
   }
-});
-resetDemoBtn.addEventListener('click', ()=>{ if(confirm('تهيئة بيانات تجريبية؟ سيستبدل المستخدمون الحاليون')) seedDemo(); });
-logoutBtn.addEventListener('click', ()=>{ localStorage.removeItem(LS_ADMIN_SESSION); loginView.classList.remove('hidden'); dashboardView.classList.add('hidden'); });
-
-function showDashboard(u){
-  loginView.classList.add('hidden');
-  dashboardView.classList.remove('hidden');
-  loggedAdmin.textContent = u;
-  render();
 }
 
-/* Table render */
-function render(){
-  const all = loadUsers();
-  const q = (searchInput.value||'').toLowerCase().trim();
+function render(list){
+  const allLocal = list ?? loadUsers();
+  const q = (searchInput.value || '').toLowerCase().trim();
   const rf = filterRole.value;
-  const filtered = all.filter(x=>{
+
+  const filtered = allLocal.filter(x=>{
     const matchQ = !q || (x.username+' '+(x.email||'')+' '+(x.notes||'')).toLowerCase().includes(q);
-    const matchR = !rf || x.role===rf;
+    const matchR = !rf || x.role === rf;
     return matchQ && matchR;
   });
 
@@ -246,17 +184,17 @@ function render(){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(u.username)}</td>
-      <td>${esc(u.email||'-')}</td>
-      <td>${esc(u.role||'user')}</td>
-      <td class="small">${esc(u.notes||'')}</td>
-      <td style="text-align:center" class="actions">
+      <td>${esc(u.email || '-')}</td>
+      <td>${esc(u.role || 'user')}</td>
+      <td class="small">${esc(u.notes || '')}</td>
+      <td style="text-align:center">
         <button class="btn-ghost" data-act="view" data-id="${u.id}">عرض</button>
         <button class="btn-primary" data-act="edit" data-id="${u.id}">تعديل</button>
         <button class="btn-ghost" data-act="del"  data-id="${u.id}">حذف</button>
       </td>`;
     usersTbody.appendChild(tr);
   });
-  tableMsg.textContent = `إجمالي: ${all.length} — المعروض: ${filtered.length}`;
+  tableMsg.textContent = `إجمالي محلي: ${loadUsers().length} — المعروض: ${filtered.length}`;
 
   usersTbody.querySelectorAll('button').forEach(b=>{
     b.onclick = ()=>{
@@ -269,38 +207,16 @@ function render(){
   });
 }
 
-/* CRUD */
 function openAdd(){
-  editId=null; modalTitle.textContent='إضافة مستخدم جديد';
+  editId=null; modalTitle.textContent='إضافة مستخدم';
   m_username.value=''; m_email.value=''; m_password.value=''; m_role.value='user'; m_notes.value='';
-  modalMsg.innerHTML=''; userModalBackdrop.classList.remove('hidden'); m_username.focus();
+  modalMsg.innerHTML=''; modal.classList.remove('hidden'); m_username.focus();
 }
 function openEdit(id){
-  const u = loadUsers().find(x=>x.id===id); if(!u) return toast('غير موجود','error');
+  const u = loadUsers().find(x=>x.id===id); if(!u) return;
   editId=id; modalTitle.textContent='تعديل مستخدم';
   m_username.value=u.username; m_email.value=u.email||''; m_password.value=b64d(u.pass||''); m_role.value=u.role||'user'; m_notes.value=u.notes||'';
-  modalMsg.innerHTML=''; userModalBackdrop.classList.remove('hidden'); m_username.focus();
-}
-function saveUser(){
-  const username=m_username.value.trim();
-  const email=m_email.value.trim();
-  const password=m_password.value;
-  const role=m_role.value;
-  const notes=m_notes.value.trim();
-  if(!username) return modalMsg.innerHTML='<div class="msg error">أدخل اسم المستخدم</div>';
-  if(!password) return modalMsg.innerHTML='<div class="msg error">أدخل كلمة المرور</div>';
-
-  let list=loadUsers();
-  if(editId){
-    list=list.map(x=> x.id===editId ? {...x,username,email,pass:b64(password),role,notes} : x);
-    saveUsers(list); toast('تم التحديث','success');
-  }else{
-    if(list.some(x=>x.username.toLowerCase()===username.toLowerCase()))
-      return modalMsg.innerHTML='<div class="msg error">اسم المستخدم موجود</div>';
-    list.unshift({id:genId(),username,email,pass:b64(password),role,notes});
-    saveUsers(list); toast('تمت الإضافة','success');
-  }
-  userModalBackdrop.classList.add('hidden'); render();
+  modalMsg.innerHTML=''; modal.classList.remove('hidden'); m_username.focus();
 }
 function viewUser(id){
   const u=loadUsers().find(x=>x.id===id); if(!u) return;
@@ -309,18 +225,39 @@ function viewUser(id){
 function delUser(id){
   if(!confirm('حذف المستخدم؟')) return;
   saveUsers(loadUsers().filter(x=>x.id!==id));
-  toast('تم الحذف','success'); render();
+  render();
 }
 
-/* Events */
-addUserBtn.onclick=openAdd;
-cancelUserBtn.onclick=()=>userModalBackdrop.classList.add('hidden');
-saveUserBtn.onclick=saveUser;
-searchInput.oninput=render; filterRole.onchange=render;
+function saveUser(){
+  const username=m_username.value.trim();
+  const email=m_email.value.trim();
+  const password=m_password.value;
+  const role=m_role.value;
+  const notes=m_notes.value.trim();
+
+  if(!username){ modalMsg.innerHTML='<div class="msg error">أدخل اسم المستخدم</div>'; return; }
+  if(!password){ modalMsg.innerHTML='<div class="msg error">أدخل كلمة المرور</div>'; return; }
+
+  let list=loadUsers();
+  if(editId){
+    list = list.map(x=> x.id===editId ? {...x,username,email,pass:b64(password),role,notes} : x);
+  } else {
+    if(list.some(x=>x.username.toLowerCase()===username.toLowerCase())){
+      modalMsg.innerHTML='<div class="msg error">اسم المستخدم موجود</div>'; return;
+    }
+    list.unshift({id:genId(), username, email, pass:b64(password), role, notes});
+  }
+  saveUsers(list);
+  modal.classList.add('hidden');
+  render();
+}
+
+/* Export/Import/Global */
 exportBtn.onclick=()=>{
   const blob=new Blob([JSON.stringify(loadUsers(),null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
   a.href=url; a.download='users.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  alert('تم تنزيل users.json — ارفعه/استبدله في الريبو ليصبح عالميًا عبر أي متصفح.');
 };
 importBtn.onclick=()=>importFile.click();
 importFile.onchange=(e)=>{
@@ -330,35 +267,37 @@ importFile.onchange=(e)=>{
     try{
       const arr=JSON.parse(evt.target.result);
       if(!Array.isArray(arr)) throw new Error('ملف غير صالح');
+      // توحيد البنية
       const cleaned=arr.map(u=>({
-        id:u.id||genId(),
-        username:u.username||('user_'+Math.random().toString(36).slice(2,6)),
-        email:u.email||'',
-        pass:u.pass||b64('password'),
-        role:u.role||'user',
-        notes:u.notes||''
+        id: u.id || genId(),
+        username: u.username || ('user_'+Math.random().toString(36).slice(2,6)),
+        email: u.email || '',
+        pass: u.pass || b64('password'),
+        role: u.role || 'user',
+        notes: u.notes || ''
       }));
-      saveUsers(cleaned); toast('تم الاستيراد','success'); render();
-    }catch(err){ toast('فشل الاستيراد: '+err.message,'error'); }
+      saveUsers(cleaned);
+      alert('تم الاستيراد محليًا. لتعميمه: صدّر الملف وبدّل users.json في الريبو.');
+      render();
+    }catch(err){ alert('فشل الاستيراد: '+err.message); }
     finally{ importFile.value=''; }
   };
   rd.readAsText(f);
 };
 
-/* Init */
-document.addEventListener('DOMContentLoaded',()=>{
-  const sess=JSON.parse(localStorage.getItem(LS_ADMIN_SESSION)||'null');
-  if(sess && sess.u===ADMIN.username){ showDashboard(sess.u); }
-  else{ loginView.classList.remove('hidden'); dashboardView.classList.add('hidden'); adminUsername.value=ADMIN.username; adminPassword.value=ADMIN.password; }
-});
+loadGlobalBtn.onclick=async()=>{
+  const global = await loadGlobalUsers();
+  // عرض القراءة العالمية دون حفظ محلي
+  render(global);
+};
 
-/* اختصار علوي */
-(function top(){
-  const top=document.getElementById('topActions');
-  const btn = document.createElement('button'); btn.className='btn-ghost'; btn.textContent='اذهب للصفحة الرئيسية';
-  btn.onclick=()=>{ window.location.href='index.html'; };
-  top.appendChild(btn);
-})();
+addUserBtn.onclick=openAdd;
+cancelUserBtn.onclick=()=>modal.classList.add('hidden');
+saveUserBtn.onclick=saveUser;
+searchInput.oninput=render;
+filterRole.onchange=render;
+
+document.addEventListener('DOMContentLoaded', ()=> render());
 </script>
 </body>
 </html>
