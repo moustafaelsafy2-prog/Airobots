@@ -117,7 +117,7 @@
                 <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
                     نقدم لك فريقاً متخصصاً من 12 مساعداً، كل منهم جاهز لإنجاز مهمة محددة بدقة وكفاءة.
                 </p>
-                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">
+                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full">
                     ابدأ الآن
                 </a>
             </div>
@@ -138,7 +138,7 @@
                             <span class="text-gradient text-6xl">39$</span>
                         </p>
                         <p class="text-gray-400 mb-6">للوصول مدى الحياة</p>
-                        <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">
+                        <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full">
                             اشترِ الآن
                         </a>
                     </div>
@@ -231,6 +231,7 @@
                 <h3 class="text-4xl font-bold mb-4 text-white">تعرف على فريقك</h3>
                 <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">12 مساعداً ذكياً، كل منهم يمثل خبرة محددة لمساعدتك على التفوق في مجالك.</p>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- نفس بطاقات الروبوتات كما كانت -->
                     <div class="robot-card p-4">
                         <div class="robot-circle"><img src="https://cdn.pixabay.com/photo/2023/04/18/06/05/ai-generated-7933930_1280.jpg" alt="أيقونة روبوت للتسويق الرقمي" class="robot-image"/></div>
                         <h4 class="font-bold mt-4 text-white">ألفا (Alfa)</h4>
@@ -359,7 +360,7 @@
             <div class="container mx-auto px-4">
                 <h3 class="text-4xl font-bold text-white mb-4">جاهز لتحقيق المزيد؟</h3>
                 <p class="text-xl text-gray-400 mb-8">انضم إلى فريق العون الذكي وابدأ في إنجاز مهامك بكفاءة لم يسبق لها مثيل.</p>
-                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full font-bold">اشترِ الآن</a>
+                <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full">اشترِ الآن</a>
             </div>
         </section>
     </main>
@@ -430,14 +431,14 @@
         <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
             <button id="back-to-dashboard-from-profile-btn" class="text-white text-2xl">&larr;</button>
             <h4 class="text-xl font-bold text-white flex-grow text-center">الملف الشخصي</h4>
-            <span class="w-6 h-6"></span>
+            <span class="w-6 ه-6"></span>
         </div>
         <div class="container mx-auto px-4 py-8">
             <h3 class="text-3xl font-bold text-white mb-6">بياناتي الأساسية</h3>
-            <div id="basic-data" class="bg-gray-800 p-6 rounded-lg mb-8 border border-gray-700"></div>
+            <div id="basic-data" class="bg-gray-800 پ-6 rounded-lg mb-8 border border-gray-700"></div>
 
             <h3 class="text-3xl font-bold text-white mb-6">المعلومات التي تعلمها الذكاء الاصطناعي</h3>
-            <div id="learned-data" class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+            <div id="learned-data" class="bg-gray-800 پ-6 rounded-lg border border-gray-700">
                 <p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>
             </div>
         </div>
@@ -764,15 +765,45 @@
             }
         });
 
-        /* ================== Gemini Bridge (بدون أي تغيير بصري) ================== */
+        /* ================== Gemini Bridge (مسار نتلايف + سياق أقوى) ================== */
+        const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
+
         function currentPersona() { return typeof currentRobot === "string" ? currentRobot : ""; }
+
+        function recentConversationFor(robotName, limit = 12) {
+          const conv = JSON.parse(localStorage.getItem(`conversation_${robotName}`) || "[]");
+          // نختصر التاريخ حتى لا يطول الطلب
+          return conv.slice(-limit).map(m => ({ role: m.sender === "user" ? "user" : "assistant", text: m.text }));
+        }
+
+        // مهلة طلب الشبكة لعدم التعلق
+        function withTimeout(promise, ms = 20000) {
+          const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
+          return Promise.race([promise, t]);
+        }
+
         async function geminiReply(userText, persona = "") {
-          const res = await fetch("/api/chat", {
+          const company = JSON.parse(localStorage.getItem("companyData") || "{}");
+          const history = recentConversationFor(currentRobot || persona);
+
+          const body = {
+            messages: [...history, { role: "user", text: userText }],
+            persona,
+            meta: {
+              company
+            }
+          };
+
+          const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: [{ role: "user", text: userText }], persona })
-          });
-          if (!res.ok) throw new Error("Chat API failed");
+            body: JSON.stringify(body)
+          }));
+
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(`HTTP ${res.status} - ${txt}`);
+          }
           const data = await res.json();
           return (data && data.text) ? data.text : "لم أستقبل ردًا من النموذج.";
         }
@@ -782,7 +813,9 @@
         // استبدال منطق الإرسال فقط ليرتبط بـ Gemini — الواجهة تبقى كما هي
         function handleRobotChatInput() {
             const userMessage = robotChatInput.value.trim();
+            if (!currentRobot) { addAIMessage("⚠️ اختر مساعدًا أولًا من لوحة التحكم."); return; }
             if (userMessage === '') return;
+
             addMessage(robotChatMessages, userMessage, 'user');
 
             const savedConversation = JSON.parse(localStorage.getItem(`conversation_${currentRobot}`)) || [];
@@ -798,7 +831,7 @@
                     localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(savedConversation));
                 } catch (err) {
                     console.error(err);
-                    const fallback = "⚠️ حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. حاول لاحقًا.";
+                    const fallback = `⚠️ تعذّر الاتصال بالذكاء الاصطناعي:\n${err.message}`;
                     addAIMessage(fallback);
                     savedConversation.push({ text: fallback, sender: 'ai' });
                     localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(savedConversation));
