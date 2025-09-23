@@ -1,23 +1,20 @@
 {
-  "name": "smart-assistants",
+  "name": "airobots",
   "version": "1.0.0",
-  "description": "منصة فريق العون الذكي — واجهة + دوال Netlify + Gemini API + لوحة تحكم الأدمن",
-  "main": "index.js",
+  "description": "AI Robots platform with Netlify Functions and Gemini integration",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "netlify dev",
-    "build": "echo 'No build step required'",
-    "serve": "npx http-server public -p 3000"
+    "dev": "netlify dev",
+    "build": "echo \"Static build — using public/ as root\"",
+    "start": "netlify dev"
   },
-  "author": "Mustafa",
-  "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.16.0",
-    "@netlify/functions": "^2.6.0",
-    "@netlify/blobs": "^6.5.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2"
+    "@google/generative-ai": "^0.16.0"
   },
   "engines": {
-    "node": ">=20"
-  }
+    "node": ">=18"
+  },
+  "author": "Mustafa",
+  "license": "MIT"
 }
