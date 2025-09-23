@@ -1,62 +1,62 @@
 // netlify/functions/users.js
 import { getStore } from "@netlify/blobs";
 
-export default async function handler(req, res) {
-  const store = getStore("users"); // خزن باسم users
-  let users = [];
+export default async (req) => {
+  const store = getStore("users");
+  const method = req.method || "GET";
 
   try {
-    const existing = await store.get("users.json", { type: "json" });
-    if (existing) users = existing;
-  } catch (err) {
-    console.error("❌ خطأ في قراءة المستخدمين:", err);
-  }
+    // تحميل المستخدمين الحاليين
+    let users = (await store.get("users.json", { type: "json" })) || [];
 
-  // --- التعامل مع الميثود ---
-  if (req.method === "GET") {
-    return res.status(200).json({ ok: true, users });
-  }
+    if (method === "GET") {
+      return new Response(JSON.stringify({ ok: true, users }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-  if (req.method === "POST") {
-    try {
-      const body = JSON.parse(req.body);
-
+    if (method === "POST") {
+      const body = await req.json();
       if (!body.username || !body.password) {
-        return res.status(400).json({ ok: false, error: "يجب إدخال اسم مستخدم وكلمة مرور" });
+        return new Response(JSON.stringify({ ok: false, error: "بيانات ناقصة" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
-      const newUser = {
-        id: Date.now(),
-        username: body.username,
-        email: body.email || "",
-        role: body.role || "مستخدم",
-        password: btoa(body.password), // تخزين مبسط Base64
-      };
+      body.id = Date.now().toString();
+      body.password = btoa(body.password); // تخزين مبسط
+      users.push(body);
 
-      users.push(newUser);
+      await store.set("users.json", JSON.stringify(users));
 
-      await store.setJSON("users.json", users);
-
-      return res.status(201).json({ ok: true, user: newUser });
-    } catch (err) {
-      console.error("❌ خطأ عند إضافة المستخدم:", err);
-      return res.status(500).json({ ok: false, error: "خطأ في إضافة المستخدم" });
+      return new Response(JSON.stringify({ ok: true, users }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  }
 
-  if (req.method === "DELETE") {
-    try {
-      const body = JSON.parse(req.body);
-      users = users.filter(u => u.id !== body.id);
+    if (method === "DELETE") {
+      const url = new URL(req.url);
+      const id = url.searchParams.get("id");
+      users = users.filter((u) => u.id !== id);
+      await store.set("users.json", JSON.stringify(users));
 
-      await store.setJSON("users.json", users);
-
-      return res.status(200).json({ ok: true });
-    } catch (err) {
-      console.error("❌ خطأ عند الحذف:", err);
-      return res.status(500).json({ ok: false, error: "خطأ في الحذف" });
+      return new Response(JSON.stringify({ ok: true, users }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  }
 
-  return res.status(405).json({ ok: false, error: "Method Not Allowed" });
-}
+    return new Response(JSON.stringify({ ok: false, error: "Method Not Allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ ok: false, error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
