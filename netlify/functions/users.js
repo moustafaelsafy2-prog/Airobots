@@ -1,21 +1,33 @@
-// netlify/functions/users.js
-import { getStore } from "@netlify/blobs";
-
-/**
- * Users API
- * ✅ GET:    ?search=...&page=1&limit=10
- * ✅ POST:   { username, password, email, role }
- * ✅ PUT:    { id, username?, email?, role?, password? }
- * ✅ DELETE: /api/users?id=123
+/*! @file netlify/functions/users.js
+ *  @version 2.0.0
+ *  @updated 2025-09-23
+ *  @owner Mustafa
+ *  @notes: CRUD + بحث + Pagination + حماية بالـ JWT
  */
-export default async (req) => {
+
+import { getStore } from "@netlify/blobs";
+import { withCORS, jsonResponse, verifyToken } from "./_utils.js";
+
+export const handler = withCORS(async (event) => {
   const store = getStore("users");
-  const method = req.method || "GET";
+  const method = event.httpMethod || "GET";
 
   try {
+    // تحقق من التوكن (إلزامي لكل العمليات ماعدا GET العام)
+    const isProtected = ["POST", "PUT", "DELETE"].includes(method);
+    if (isProtected) {
+      const auth = event.headers.authorization || "";
+      const token = auth.replace("Bearer ", "");
+      const decoded = verifyToken(token);
+      if (!decoded || decoded.role !== "admin") {
+        return jsonResponse(401, { ok: false, error: "غير مصرح لك" });
+      }
+    }
+
+    // جلب بيانات المستخدمين من التخزين
     let users = (await store.get("users.json", { type: "json" })) || [];
 
-    // --- Helpers ---
+    // Helpers
     const findById = (id) => users.find((u) => String(u.id) === String(id));
     const findByUsername = (username) =>
       users.find(
@@ -24,111 +36,115 @@ export default async (req) => {
           (username || "").trim().toLowerCase()
       );
 
-    const json = (data, status = 200) =>
-      new Response(JSON.stringify(data), {
-        status,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      });
+    // البحث + التصفح
+    const url = new URL(event.rawUrl);
+    const q = (url.searchParams.get("search") || "").toLowerCase().trim();
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
 
-    // --- GET (with search + pagination) ---
+    const filterUsers = (list) =>
+      !q
+        ? list
+        : list.filter((u) =>
+            [u.username, u.email, u.role]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(q)
+          );
+
+    // 📌 GET — قراءة المستخدمين (مع البحث والتصفح)
     if (method === "GET") {
-      const url = new URL(req.url);
-      const search = (url.searchParams.get("search") || "").toLowerCase();
-      const page = parseInt(url.searchParams.get("page") || "1");
-      const limit = parseInt(url.searchParams.get("limit") || "10");
+      const filtered = filterUsers(users);
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paged = filtered.slice(start, end);
 
-      let filtered = users;
-      if (search) {
-        filtered = users.filter((u) => {
-          const hay = `${u.username} ${u.email} ${u.role}`.toLowerCase();
-          return hay.includes(search);
+      return jsonResponse(200, {
+        ok: true,
+        data: paged,
+        page,
+        limit,
+        total: filtered.length,
+      });
+    }
+
+    // 📌 POST — إضافة مستخدم جديد
+    if (method === "POST") {
+      const body = JSON.parse(event.body || "{}");
+      const { username, password, email = "", role = "مستخدم" } = body;
+
+      if (!username || !password) {
+        return jsonResponse(400, { ok: false, error: "البيانات ناقصة" });
+      }
+
+      const existing = findByUsername(username);
+      if (existing) {
+        return jsonResponse(409, {
+          ok: false,
+          error: "اسم المستخدم مستخدم بالفعل",
         });
       }
 
-      const total = filtered.length;
-      const start = (page - 1) * limit;
-      const end = start + limit;
-      const data = filtered.slice(start, end);
-
-      return json({ ok: true, data, page, limit, total });
-    }
-
-    // --- POST (create / upsert by username) ---
-    if (method === "POST") {
-      const body = await req.json();
-      const { username, password, email = "", role = "مستخدم" } = body || {};
-      if (!username || !password)
-        return json({ ok: false, error: "البيانات ناقصة" }, 400);
-
-      let node = findByUsername(username);
-      if (node) {
-        node.email = email;
-        node.role = role;
-        node.password = btoa(password);
-      } else {
-        node = {
-          id: Date.now().toString(),
-          username,
-          email,
-          role,
-          password: btoa(password),
-          createdAt: new Date().toISOString(),
-        };
-        users.push(node);
-      }
+      const user = {
+        id: Date.now().toString(),
+        username,
+        email,
+        role,
+        password: btoa(password), // Base64
+        createdAt: new Date().toISOString(),
+      };
+      users.push(user);
 
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, data: node }, 201);
+      return jsonResponse(201, { ok: true, user });
     }
 
-    // --- PUT (update) ---
+    // 📌 PUT — تعديل مستخدم
     if (method === "PUT") {
-      const body = await req.json();
-      const { id, username, email, role, password } = body || {};
-      if (!id) return json({ ok: false, error: "id مفقود" }, 400);
+      const body = JSON.parse(event.body || "{}");
+      const { id, username, email, role, password } = body;
+
+      if (!id) return jsonResponse(400, { ok: false, error: "id مفقود" });
 
       const node = findById(id);
-      if (!node) return json({ ok: false, error: "المستخدم غير موجود" }, 404);
+      if (!node) return jsonResponse(404, { ok: false, error: "المستخدم غير موجود" });
 
-      // منع تكرار username
       if (username) {
         const dup = findByUsername(username);
         if (dup && String(dup.id) !== String(id)) {
-          return json({ ok: false, error: "اسم المستخدم مستخدم بالفعل" }, 409);
+          return jsonResponse(409, { ok: false, error: "اسم المستخدم مستخدم بالفعل" });
         }
+        node.username = username;
       }
-
-      if (username != null) node.username = username;
       if (email != null) node.email = email;
       if (role != null) node.role = role;
       if (password) node.password = btoa(password);
 
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, data: node }, 200);
+      return jsonResponse(200, { ok: true, user: node });
     }
 
-    // --- DELETE ---
+    // 📌 DELETE — حذف مستخدم
     if (method === "DELETE") {
-      const url = new URL(req.url);
       const id = url.searchParams.get("id");
+      if (!id) return jsonResponse(400, { ok: false, error: "id مفقود" });
+
       const before = users.length;
       users = users.filter((u) => String(u.id) !== String(id));
-      if (users.length === before)
-        return json({ ok: false, error: "المستخدم غير موجود" }, 404);
+
+      if (users.length === before) {
+        return jsonResponse(404, { ok: false, error: "المستخدم غير موجود" });
+      }
 
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, id }, 200);
+      return jsonResponse(200, { ok: true, id });
     }
 
-    return json({ ok: false, error: "Method Not Allowed" }, 405);
+    // 📌 أي ميثود آخر
+    return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
   } catch (err) {
     console.error("❌ Users API error:", err);
-    return new Response(JSON.stringify({ ok: false, error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse(500, { ok: false, error: err.message });
   }
-};
+});
