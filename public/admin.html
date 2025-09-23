@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة الأدمن</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة الأدمن — إدارة المستخدمين</title>
   <style>
+    :root { color-scheme: dark; }
     body {
       font-family: "Tajawal", sans-serif;
       background: #111827;
@@ -12,86 +13,139 @@
       margin: 0; padding: 0;
     }
     header {
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       background: #1f2937;
       text-align: center;
+      border-bottom: 1px solid #374151;
     }
     .hidden { display: none !important; }
     .container { padding: 1rem 2rem; }
 
-    /* صندوق تسجيل الدخول */
+    /* --- صندوق تسجيل الدخول --- */
     #login-box {
-      max-width: 400px;
+      max-width: 420px;
       margin: 3rem auto;
       padding: 2rem;
       background: #1f2937;
-      border-radius: 8px;
+      border: 1px solid #374151;
+      border-radius: 10px;
       text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
     }
+    #login-box h2 { margin: 0 0 1rem; }
     #login-box input {
       width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: none;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background:#0f172a;
+      color: #e5e7eb;
+      outline: none;
     }
+    #login-box input:focus { border-color:#2563eb; }
     #login-box button {
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1rem;
       border: none;
       background: #2563eb;
       color: #fff;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
+      font-weight: 700;
     }
 
-    /* جدول المستخدمين */
+    /* --- شريط الأدوات --- */
+    #toolbar {
+      margin: 12px 0 2px;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    #toolbar input, #toolbar select {
+      padding: .55rem .75rem;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      background:#0f172a; color:#e5e7eb;
+      outline: none;
+    }
+    #toolbar input:focus, #toolbar select:focus { border-color:#2563eb; }
+    .btn-primary {
+      background:#2563eb; color:#fff; border:none; border-radius:8px;
+      padding:.55rem .9rem; cursor:pointer; font-weight:700;
+    }
+
+    /* --- الجدول --- */
     table {
       width: 100%;
-      margin-top: 1rem;
+      margin-top: 10px;
       border-collapse: collapse;
       background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      overflow: hidden;
     }
-    th, td {
-      padding: 0.75rem;
+    thead th {
+      background: #0b1220;
+      text-align: right;
+      padding: 0.8rem;
       border-bottom: 1px solid #374151;
+      user-select: none;
     }
-    th {
-      background: #111827;
-      text-align: left;
+    tbody td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #2b3647;
     }
+    th[data-sort] { cursor: pointer; }
+    th[data-sort]:hover { color:#93c5fd; }
 
-    /* المودال */
+    /* --- المودال --- */
     #modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9990;
     }
     #modal-content {
       background: #1f2937;
-      padding: 2rem;
-      border-radius: 8px;
-      width: 90%; max-width: 500px;
+      padding: 1.25rem 1.25rem 1rem;
+      border-radius: 12px;
+      border: 1px solid #374151;
+      width: 92%; max-width: 520px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.35);
     }
+    #modal-content h3 { margin: .25rem 0 1rem; }
     #modal-content input {
       width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: none;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background:#0f172a;
+      color: #e5e7eb;
+      outline: none;
     }
+    #modal-actions { text-align: left; }
     #modal-content button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      margin-left: 0.5rem;
-      cursor: pointer;
+      padding: 0.55rem .9rem;
+      border: none; border-radius: 8px; margin-inline-start: .5rem;
+      cursor: pointer; font-weight:700;
     }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger { background:#dc2626; color:#fff; }
+    .btn-ghost { background:#374151; color:#fff; }
+
+    /* --- Toast --- */
+    #toasts { position: fixed; bottom: 16px; left: 16px;
+      display:flex; flex-direction:column; gap:8px; z-index: 10000; }
+    .toast {
+      background:#0b1220; color:#fff; border:1px solid #374151;
+      padding:.6rem .9rem; border-radius:10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      animation:slidein .18s ease-out;
+    }
+    @keyframes slidein {
+      from { transform: translateY(8px); opacity:.6 } to { transform:none; opacity:1 }
+    }
+
+    /* أزرار الإجراءات داخل الجدول */
+    .row-actions button { margin-inline-start: 6px; }
   </style>
 </head>
 <body>
@@ -99,24 +153,38 @@
     <h1>لوحة الأدمن — إدارة المستخدمين</h1>
   </header>
 
-  <!-- صندوق تسجيل الدخول -->
+  <!-- تسجيل دخول الأدمن -->
   <div id="login-box">
     <h2>تسجيل دخول الأدمن</h2>
-    <input type="text" id="admin-user" placeholder="اسم المستخدم">
-    <input type="password" id="admin-pass" placeholder="كلمة المرور">
+    <input type="text" id="admin-user" placeholder="اسم المستخدم"/>
+    <input type="password" id="admin-pass" placeholder="كلمة المرور"/>
     <button id="login-btn">دخول</button>
-    <p id="login-msg" style="color:red; margin-top:10px;"></p>
+    <p id="login-msg" style="color:#f87171; margin-top:10px; min-height:18px;"></p>
   </div>
 
-  <!-- محتوى الأدمن -->
+  <!-- لوحة الأدمن -->
   <div id="admin-panel" class="hidden container">
-    <button id="add-user-btn" class="btn-primary">➕ إضافة مستخدم</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button id="add-user-btn" class="btn-primary">➕ إضافة مستخدم</button>
+      <div id="toolbar">
+        <input id="q" type="search" placeholder="ابحث بالاسم/البريد/الدور…"/>
+        <select id="roleFilter">
+          <option value="">كل الأدوار</option>
+          <option value="مستخدم">مستخدم</option>
+          <option value="مشرف">مشرف</option>
+        </select>
+        <button id="exportCsv" class="btn-primary">⬇️ تصدير CSV</button>
+      </div>
+    </div>
+
+    <div id="resultsCount" style="margin:6px 0; opacity:.9;"></div>
+
     <table id="users-table">
       <thead>
         <tr>
-          <th>اسم المستخدم</th>
-          <th>البريد</th>
-          <th>الدور</th>
+          <th data-sort="username">اسم المستخدم</th>
+          <th data-sort="email">البريد</th>
+          <th data-sort="role">الدور</th>
           <th>إجراءات</th>
         </tr>
       </thead>
@@ -126,24 +194,29 @@
 
   <!-- نافذة إضافة/تعديل -->
   <div id="modal" class="hidden">
-    <div id="modal-content">
+    <div id="modal-content" role="dialog" aria-modal="true">
       <h3 id="modal-title">إضافة مستخدم</h3>
-      <input type="text" id="m_username" placeholder="اسم المستخدم">
-      <input type="email" id="m_email" placeholder="البريد">
-      <input type="password" id="m_pass" placeholder="كلمة المرور">
-      <input type="text" id="m_role" placeholder="الدور (مثال: مستخدم)">
-      <div style="text-align: right;">
+      <input type="text" id="m_username" placeholder="اسم المستخدم"/>
+      <input type="email" id="m_email" placeholder="البريد"/>
+      <input type="password" id="m_pass" placeholder="كلمة المرور"/>
+      <input type="text" id="m_role" placeholder="الدور (مثال: مستخدم)"/>
+      <div id="modal-actions">
         <button id="save-user" class="btn-primary">حفظ</button>
         <button id="cancel-user" class="btn-danger">إلغاء</button>
       </div>
     </div>
   </div>
 
+  <!-- حاوية Toast -->
+  <div id="toasts"></div>
+
+  <!-- ====================== المنطق الأساسي — بدون تغيير الوظيفة ====================== -->
   <script>
-    // ---- تسجيل الدخول ----
+    // ---- بيانات اعتماد الأدمن المحلية (واجهية فقط)
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "Admin@2025";
 
+    // عناصر
     const loginBox   = document.getElementById("login-box");
     const adminPanel = document.getElementById("admin-panel");
     const loginBtn   = document.getElementById("login-btn");
@@ -155,13 +228,15 @@
       if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
         loginBox.classList.add("hidden");
         adminPanel.classList.remove("hidden");
-        renderUsers();
+        renderUsers();               // استدعاء العرض الأساسي
+        // تفعيل طبقة التحسينات (سيعاد الربط تلقائياً)
+        initEnhancements();
       } else {
         loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
       }
     });
 
-    // ---- إدارة المستخدمين ----
+    // ---- إدارة المستخدمين بالمتصفح (LocalStorage) ----
     let editingIndex = null;
     const modal      = document.getElementById("modal");
     const addBtn     = document.getElementById("add-user-btn");
@@ -185,9 +260,9 @@
           <td>${user.username}</td>
           <td>${user.email || ""}</td>
           <td>${user.role || "مستخدم"}</td>
-          <td>
-            <button onclick="editUser(${i})">✏️ تعديل</button>
-            <button onclick="deleteUser(${i})">🗑️ حذف</button>
+          <td class="row-actions">
+            <button class="btn-ghost" onclick="editUser(${i})">✏️ تعديل</button>
+            <button class="btn-ghost" onclick="deleteUser(${i})">🗑️ حذف</button>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -218,25 +293,29 @@
       }
 
       const users = getUsers();
-      if (editingIndex !== null) {
-        users[editingIndex] = { username, email, pass, role };
-      } else {
+
+      // منع التكرار بالاسم عند الإضافة فقط
+      if (editingIndex === null) {
+        const exists = users.some(u => String(u.username).trim() === username);
+        if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
         users.push({ username, email, pass, role });
+      } else {
+        users[editingIndex] = { username, email, pass, role };
       }
+
       setUsers(users);
       modal.classList.add("hidden");
       renderUsers();
     });
 
-    // ---- إجراءات تعديل وحذف ----
     window.editUser = function(i) {
       editingIndex = i;
       const user = getUsers()[i];
       document.getElementById("modal-title").textContent = "تعديل مستخدم";
-      document.getElementById("m_username").value = user.username;
-      document.getElementById("m_email").value    = user.email;
-      document.getElementById("m_pass").value     = user.pass;
-      document.getElementById("m_role").value     = user.role;
+      document.getElementById("m_username").value = user.username || "";
+      document.getElementById("m_email").value    = user.email || "";
+      document.getElementById("m_pass").value     = user.pass || "";
+      document.getElementById("m_role").value     = user.role || "مستخدم";
       modal.classList.remove("hidden");
     }
 
@@ -248,6 +327,159 @@
       renderUsers();
     }
   </script>
+
+  <!-- ====================== طبقة التحسينات (إضافات غير مكسّرة) ====================== -->
+  <script>
+    function initEnhancements() {
+      (function () {
+        // حالة العرض
+        let STATE = { q:"", role:"", sortKey:"", sortDir:"asc" };
+        const $ = (s, r=document) => r.querySelector(s);
+        const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+        const debounce = (fn, ms=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+
+        // Toast
+        function toast(msg, type="ok") {
+          const box = $("#toasts");
+          if (!box) return;
+          const el = document.createElement("div");
+          el.className = "toast";
+          el.style.borderColor = type==="err" ? "#dc2626" : "#10b981";
+          el.textContent = msg;
+          box.appendChild(el);
+          setTimeout(()=> el.remove(), 2800);
+        }
+
+        function getFilteredSortedUsers() {
+          const users = (typeof getUsers === "function" ? getUsers() : []);
+          const q = STATE.q.trim().toLowerCase();
+          const role = STATE.role.trim();
+
+          let out = users.filter(u => {
+            const inRole = !role || (String(u.role||"").trim()===role);
+            if (!q) return inRole;
+            const hay = [u.username, u.email, u.role].map(v => String(v||"").toLowerCase()).join(" ");
+            return inRole && hay.includes(q);
+          });
+
+          if (STATE.sortKey) {
+            const k = STATE.sortKey;
+            const dir = STATE.sortDir === "asc" ? 1 : -1;
+            out.sort((a,b)=> (String(a[k]||"").localeCompare(String(b[k]||""))) * dir);
+          }
+          return out;
+        }
+
+        function findIndexById(uobj) {
+          const list = (typeof getUsers === "function" ? getUsers() : []);
+          const idx = list.findIndex(u =>
+            (u === uobj) ||
+            (String(u.username||"")===String(uobj.username||"") &&
+             String(u.email||"")   ===String(uobj.email||"") &&
+             String(u.role||"")    ===String(uobj.role||""))
+          );
+          return idx < 0 ? 0 : idx;
+        }
+
+        function renderUsersEnhanced() {
+          // استدعاء الرسم الأصلي لتزامن التخزين/العرض
+          if (typeof renderUsers === "function") renderUsers();
+
+          const tbody = document.querySelector("#users-table tbody");
+          if (!tbody) return;
+          const data = getFilteredSortedUsers();
+
+          tbody.innerHTML = "";
+          data.forEach((user) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${user.username || ""}</td>
+              <td>${user.email || ""}</td>
+              <td>${user.role || "مستخدم"}</td>
+              <td class="row-actions">
+                <button class="btn-ghost" onclick="editUser(${findIndexById(user)})">✏️ تعديل</button>
+                <button class="btn-ghost" onclick="deleteUser(${findIndexById(user)})">🗑️ حذف</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          const c = document.getElementById("resultsCount");
+          if (c) c.textContent = `النتائج: ${data.length}`;
+        }
+
+        function toCSV(rows) {
+          const head = ["username","email","role"];
+          const esc = (s)=> `"${String(s??"").replace(/"/g,'""')}"`;
+          const body = rows.map(r => head.map(h => esc(r[h]||"")).join(",")).join("\n");
+          return head.join(",") + "\n" + body;
+        }
+        function download(filename, content) {
+          const blob = new Blob([content], {type:"text/csv;charset=utf-8;"});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a"); a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        }
+
+        function wireControls() {
+          const q   = $("#q");
+          const rf  = $("#roleFilter");
+          const ex  = $("#exportCsv");
+
+          if (q) q.addEventListener("input", debounce((e)=>{
+            STATE.q = e.target.value; renderUsersEnhanced();
+          }, 300));
+
+          if (rf) rf.addEventListener("change", (e)=>{
+            STATE.role = e.target.value; renderUsersEnhanced();
+          });
+
+          $$("#users-table thead th[data-sort]").forEach((th)=>{
+            th.addEventListener("click", ()=>{
+              const key = th.getAttribute("data-sort");
+              STATE.sortDir = (STATE.sortKey === key && STATE.sortDir === "asc") ? "desc" : "asc";
+              STATE.sortKey = key;
+              $$("#users-table thead th").forEach(h => h.innerText = h.innerText.replace(/[\s▲▼]+$/,""));
+              th.innerText = th.innerText.replace(/[\s▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
+              renderUsersEnhanced();
+            });
+          });
+
+          if (ex) ex.addEventListener("click", ()=>{
+            const rows = getFilteredSortedUsers();
+            if (!rows.length) { toast("لا توجد بيانات لتصديرها","err"); return; }
+            download("users.csv", toCSV(rows));
+            toast("تم تصدير CSV");
+          });
+
+          // مراقبة setUsers لإظهار Toast وإعادة الرسم
+          const _setUsers = window.setUsers;
+          if (typeof _setUsers === "function") {
+            window.setUsers = function(u) {
+              _setUsers(u);
+              toast("تم الحفظ بنجاح");
+              renderUsersEnhanced();
+            }
+          }
+        }
+
+        // تفعيل عند ظهور لوحة الأدمن
+        const adminPanel = document.getElementById("admin-panel");
+        if (!adminPanel) return;
+        wireControls();
+        renderUsersEnhanced();
+      })();
+    }
+
+    // في حالة فتح الصفحة واللوحة غير مخفية (سيناريو تطوير)
+    document.addEventListener("DOMContentLoaded", ()=>{
+      if (!document.getElementById("admin-panel").classList.contains("hidden")) {
+        initEnhancements();
+      }
+    });
+  </script>
+
+  <!-- إن كان لديك مزامنة خارجية لاحقًا (يبقى كما هو، لا يؤثر) -->
   <script src="admin-sync.js"></script>
 </body>
 </html>
