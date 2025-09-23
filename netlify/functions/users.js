@@ -1,32 +1,30 @@
 // netlify/functions/users.js
-// إدارة مستخدمين بسيطة عبر Netlify Blobs
-// إصلاح 502: استبدال btoa() بـ Buffer (Node)
-
 import { getStore } from "@netlify/blobs";
-import { Buffer } from "node:buffer";
 
-/** Base64 في Node */
-const toB64 = (s = "") => Buffer.from(String(s), "utf8").toString("base64");
-
-/** رد JSON موحّد */
-const json = (data, status = 200) =>
-  new Response(JSON.stringify(data), {
+function json(status, data) {
+  return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
-    },
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
   });
+}
 
-export default async (req) => {
-  const store = getStore("users"); // اسم الحاوية
-  const method = req.method || "GET";
+export const handler = async (event) => {
+  // CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return json(204, {});
+  }
 
   try {
-    // اقرأ القائمة أو مصفوفة فاضية أول مرة
-    let users = (await store.get("users.json", { type: "json" })) || [];
+    const store = getStore("users"); // namespace
+    const method = event.httpMethod || "GET";
 
-    // أدوات مساعدة
+    let users = (await store.get("users.json", { type: "json" })) || [];
     const findById = (id) => users.find((u) => String(u.id) === String(id));
     const findByUsername = (username) =>
       users.find(
@@ -35,114 +33,91 @@ export default async (req) => {
           (username || "").trim().toLowerCase()
       );
 
-    // ======== GET: دعم البحث والتصفح إن وُجدت بارامترات، وإلا نرجّع الشكل القديم ========
     if (method === "GET") {
-      const url = new URL(req.url);
+      // دعم بحث بسيط وتقسيم صفحات اختياريًا
+      const url = new URL(event.rawUrl || `https://x${event.path}?${event.queryStringParameters || ""}`);
       const q = (url.searchParams.get("search") || "").trim().toLowerCase();
-      const page = parseInt(url.searchParams.get("page") || "0", 10);
-      const limit = parseInt(url.searchParams.get("limit") || "0", 10);
+      const page = parseInt(url.searchParams.get("page") || "1", 10);
+      const limit = parseInt(url.searchParams.get("limit") || "50", 10);
 
-      // لو ما في page/limit -> استجابة متوافقة قديمة
-      if (!page || !limit) {
-        return json({ ok: true, users });
-      }
-
-      // فلترة بالبحث (اسم/بريد/دور)
-      let filtered = users;
+      let data = users;
       if (q) {
-        filtered = users.filter((u) => {
+        data = users.filter((u) => {
           const hay = [u.username, u.email, u.role]
-            .map((v) => String(v || "").toLowerCase())
+            .map((x) => String(x || "").toLowerCase())
             .join(" ");
           return hay.includes(q);
         });
       }
 
-      // ترتيب (اختياري لاحقًا) — هنا بدون ترتيب مُحدد
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
-      const safePage = Math.min(Math.max(1, page), totalPages);
-      const start = (safePage - 1) * limit;
-      const data = filtered.slice(start, start + limit);
+      const total = data.length;
+      const start = (page - 1) * limit;
+      const slice = data.slice(start, start + limit);
 
-      return json({
-        ok: true,
-        data,
-        page: safePage,
-        total,
-        limit,
-      });
+      return json(200, { ok: true, data: slice, page, limit, total });
     }
 
-    // ======== POST: إضافة (أو تحديث إذا الاسم موجود) ========
     if (method === "POST") {
-      const body = await req.json().catch(() => ({}));
+      const body = JSON.parse(event.body || "{}");
       const { username, password, email = "", role = "مستخدم" } = body || {};
+      if (!username || !password) return json(400, { ok: false, error: "البيانات ناقصة" });
 
-      if (!username || !password) {
-        return json({ ok: false, error: "البيانات ناقصة" }, 400);
-      }
-
-      // لو الاسم موجود بالفعل -> نحدّث بدل الإضافة
       const existing = findByUsername(username);
       if (existing) {
+        // حدّث الموجود لمنع التكرار
         existing.email = email;
         existing.role = role;
-        existing.password = toB64(password); // ✅ آمن في Node
+        existing.password = btoa(password);
       } else {
         users.push({
           id: Date.now().toString(),
           username,
           email,
           role,
-          createdAt: Date.now(),
-          password: toB64(password), // ✅
+          password: btoa(password),
+          createdAt: new Date().toISOString()
         });
       }
 
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, users }, 201);
+      return json(201, { ok: true, users });
     }
 
-    // ======== PUT: تعديل بحسب id مع منع تكرار الاسم ========
     if (method === "PUT") {
-      const body = await req.json().catch(() => ({}));
+      const body = JSON.parse(event.body || "{}");
       const { id, username, email, role, password } = body || {};
-
-      if (!id) return json({ ok: false, error: "id مفقود" }, 400);
+      if (!id) return json(400, { ok: false, error: "id مفقود" });
 
       const node = findById(id);
-      if (!node) return json({ ok: false, error: "المستخدم غير موجود" }, 404);
+      if (!node) return json(404, { ok: false, error: "المستخدم غير موجود" });
 
-      // منع اسم مكرر لشخص آخر
       if (username) {
         const dup = findByUsername(username);
         if (dup && String(dup.id) !== String(id)) {
-          return json({ ok: false, error: "اسم المستخدم مستخدم بالفعل" }, 409);
+          return json(409, { ok: false, error: "اسم المستخدم مستخدم بالفعل" });
         }
       }
 
       if (username != null) node.username = username;
       if (email != null) node.email = email;
       if (role != null) node.role = role;
-      if (password) node.password = toB64(password); // ✅
+      if (password) node.password = btoa(password);
 
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, users }, 200);
+      return json(200, { ok: true, users });
     }
 
-    // ======== DELETE: حذف بحسب id في query ========
     if (method === "DELETE") {
-      const url = new URL(req.url);
+      const url = new URL(event.rawUrl || `https://x${event.path}?${event.queryStringParameters || ""}`);
       const id = url.searchParams.get("id");
       users = users.filter((u) => String(u.id) !== String(id));
       await store.set("users.json", JSON.stringify(users));
-      return json({ ok: true, users }, 200);
+      return json(200, { ok: true, users });
     }
 
-    return json({ ok: false, error: "Method Not Allowed" }, 405);
+    return json(405, { ok: false, error: "Method Not Allowed" });
   } catch (err) {
-    // أي استثناء -> 500 برسالة واضحة (بدلاً من 502 غامضة)
-    return json({ ok: false, error: err.message }, 500);
+    console.error("users function error:", err);
+    return json(500, { ok: false, error: err.message || "server error" });
   }
 };
