@@ -1,43 +1,62 @@
+// netlify/functions/users.js
 import { getStore } from "@netlify/blobs";
 
-export default async (req, context) => {
-  const store = getStore("users");
-  const { method } = req;
+export default async function handler(req, res) {
+  const store = getStore("users"); // خزن باسم users
+  let users = [];
 
   try {
-    if (method === "GET") {
-      const users = (await store.get("users.json", { type: "json" })) || [];
-      return Response.json({ ok: true, users });
-    }
-
-    if (method === "POST") {
-      const body = await req.json();
-      const users = (await store.get("users.json", { type: "json" })) || [];
-      body.id = Date.now().toString();
-      users.push(body);
-      await store.set("users.json", JSON.stringify(users));
-      return Response.json({ ok: true, users });
-    }
-
-    if (method === "PUT") {
-      const body = await req.json();
-      let users = (await store.get("users.json", { type: "json" })) || [];
-      users = users.map(u => (u.id === body.id ? { ...u, ...body } : u));
-      await store.set("users.json", JSON.stringify(users));
-      return Response.json({ ok: true, users });
-    }
-
-    if (method === "DELETE") {
-      const url = new URL(req.url);
-      const id = url.searchParams.get("id");
-      let users = (await store.get("users.json", { type: "json" })) || [];
-      users = users.filter(u => u.id !== id);
-      await store.set("users.json", JSON.stringify(users));
-      return Response.json({ ok: true, users });
-    }
-
-    return new Response("Method Not Allowed", { status: 405 });
+    const existing = await store.get("users.json", { type: "json" });
+    if (existing) users = existing;
   } catch (err) {
-    return Response.json({ ok: false, msg: err.message }, { status: 500 });
+    console.error("❌ خطأ في قراءة المستخدمين:", err);
   }
-};
+
+  // --- التعامل مع الميثود ---
+  if (req.method === "GET") {
+    return res.status(200).json({ ok: true, users });
+  }
+
+  if (req.method === "POST") {
+    try {
+      const body = JSON.parse(req.body);
+
+      if (!body.username || !body.password) {
+        return res.status(400).json({ ok: false, error: "يجب إدخال اسم مستخدم وكلمة مرور" });
+      }
+
+      const newUser = {
+        id: Date.now(),
+        username: body.username,
+        email: body.email || "",
+        role: body.role || "مستخدم",
+        password: btoa(body.password), // تخزين مبسط Base64
+      };
+
+      users.push(newUser);
+
+      await store.setJSON("users.json", users);
+
+      return res.status(201).json({ ok: true, user: newUser });
+    } catch (err) {
+      console.error("❌ خطأ عند إضافة المستخدم:", err);
+      return res.status(500).json({ ok: false, error: "خطأ في إضافة المستخدم" });
+    }
+  }
+
+  if (req.method === "DELETE") {
+    try {
+      const body = JSON.parse(req.body);
+      users = users.filter(u => u.id !== body.id);
+
+      await store.setJSON("users.json", users);
+
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error("❌ خطأ عند الحذف:", err);
+      return res.status(500).json({ ok: false, error: "خطأ في الحذف" });
+    }
+  }
+
+  return res.status(405).json({ ok: false, error: "Method Not Allowed" });
+}
