@@ -706,60 +706,117 @@
       }
     });
 
-    /* ===== Gemini Bridge ===== */
-    function currentPersona(){return typeof currentRobot==="string"?currentRobot:""}
-    async function geminiReply(userText,persona=""){
-      const res=await fetch("/api/chat",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({messages:[{role:"user",text:userText}],persona})
+<script>
+  /* ================== Gemini Bridge (محترف + تراجع تلقائي) ================== */
+  const CHAT_API_CANDIDATES = ["/api/chat", "/.netlify/functions/chat"];
+
+  function currentPersona() {
+    return typeof currentRobot === "string" ? currentRobot : "";
+  }
+  function currentCompany() {
+    try { return JSON.parse(localStorage.getItem("companyData")||"{}"); }
+    catch { return {}; }
+  }
+
+  // مؤشر "يكتب..."
+  let typingEl;
+  function showTyping() {
+    if (typingEl) return;
+    typingEl = document.createElement("div");
+    typingEl.className = "chat-message ai-message";
+    typingEl.textContent = "يكتب…";
+    robotChatMessages.appendChild(typingEl);
+    robotChatMessages.scrollTop = robotChatMessages.scrollHeight;
+  }
+  function hideTyping() {
+    if (typingEl) { typingEl.remove(); typingEl = null; }
+  }
+
+  async function smartFetch(url, payload, { timeoutMs = 20000 } = {}) {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal
       });
-      if(!res.ok) throw new Error("Chat API failed");
-      const data=await res.json();
-      return (data&&data.text)?data.text:"لم أستقبل ردًا من النموذج.";
+      clearTimeout(to);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    } catch (e) {
+      clearTimeout(to);
+      throw e;
     }
-    function addAIMessage(text){addMessage(robotChatMessages,text,"ai")}
-    /* ========================= */
+  }
 
-    function handleRobotChatInput(){
-      const userMessage=robotChatInput.value.trim();
-      if(userMessage==='')return;
-      addMessage(robotChatMessages,userMessage,'user');
+  async function geminiReply(userText, persona = "") {
+    const payload = {
+      persona,
+      company: currentCompany(),
+      messages: [{ role: "user", text: userText }]
+    };
 
-      const saved=JSON.parse(localStorage.getItem(`conversation_${currentRobot}`))||[];
-      saved.push({text:userMessage,sender:'user'});
-      robotChatInput.value='';
-
-      (async()=>{
-        try{
-          const reply=await geminiReply(userMessage,currentPersona());
-          addAIMessage(reply);
-          saved.push({text:reply,sender:'ai'});
-          localStorage.setItem(`conversation_${currentRobot}`,JSON.stringify(saved));
-        }catch(err){
-          console.error(err);
-          const fallback="⚠️ حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. حاول لاحقًا.";
-          addAIMessage(fallback);
-          saved.push({text:fallback,sender:'ai'});
-          localStorage.setItem(`conversation_${currentRobot}`,JSON.stringify(saved));
+    // محاولات تلقائية مع سقوط بديل للمسار
+    const errors = [];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      for (const base of CHAT_API_CANDIDATES) {
+        try {
+          const data = await smartFetch(base, payload, { timeoutMs: 22000 });
+          if (data?.text) return data.text;
+          throw new Error("No text field");
+        } catch (err) {
+          errors.push(`${base}: ${err?.message || err}`);
         }
-      })();
-    }
-
-    robotChatSendBtn.addEventListener('click',handleRobotChatInput);
-    robotChatInput.addEventListener('keypress',e=>{if(e.key==='Enter')handleRobotChatInput()});
-
-    // Initial load
-    document.addEventListener('DOMContentLoaded',()=>{
-      if(localStorage.getItem('companyData')){
-        mainContent.classList.add('hidden');
-        mainHeader.classList.remove('hidden');
-        dashboardContainer.classList.remove('hidden');
-        renderRobotList();
-        renderConversationsList();
       }
-    });
-  </script>
+      await new Promise(r => setTimeout(r, 600 * (attempt + 1))); // backoff
+    }
+    throw new Error("Chat failed -> " + errors.join(" | "));
+  }
+
+  function addAIMessage(text) { addMessage(robotChatMessages, text, "ai"); }
+
+  // ربط زر الإرسال مع المؤشر والتخزين
+  async function handleRobotChatInput() {
+    const userMessage = robotChatInput.value.trim();
+    if (!userMessage) return;
+
+    addMessage(robotChatMessages, userMessage, "user");
+    const savedKey = `conversation_${currentRobot}`;
+    const saved = JSON.parse(localStorage.getItem(savedKey) || "[]");
+    saved.push({ text: userMessage, sender: "user" });
+    robotChatInput.value = "";
+
+    showTyping();
+    try {
+      const reply = await geminiReply(userMessage, currentPersona());
+      hideTyping();
+      addAIMessage(reply);
+      saved.push({ text: reply, sender: "ai" });
+      localStorage.setItem(savedKey, JSON.stringify(saved));
+    } catch (err) {
+      hideTyping();
+      const friendly =
+        "⚠️ حدث خطأ أثناء الاتصال بالذكاء الاصطناعي. جرب لاحقاً.\n" +
+        "تفاصيل (للمطور): " + (err?.message || err);
+      addAIMessage(friendly);
+      saved.push({ text: friendly, sender: "ai" });
+      localStorage.setItem(savedKey, JSON.stringify(saved));
+      console.error(err);
+    }
+  }
+
+  // استبدل مستمعي الإدخال القدامى لو وُجدوا
+  try {
+    robotChatSendBtn.removeEventListener("click", handleRobotChatInput);
+  } catch {}
+  robotChatSendBtn.addEventListener("click", handleRobotChatInput);
+  robotChatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") handleRobotChatInput();
+  });
+  /* ========================================================================== */
+</script>
   <script src="auth-bridge-global.js"></script>
 </body>
 </html>
