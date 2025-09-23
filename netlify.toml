@@ -1,0 +1,62 @@
+# /*! @file netlify.toml
+#  *  @version 1.0.0
+#  *  @updated 2025-09-23
+#  *  @owner Mustafa
+#  *  @notes: تهيئة Netlify للنشر (مجلد static، دوال Serverless، وتحويلات API)
+#  */
+
+[build]
+  # مجلد الملفات الثابتة
+  publish = "public"
+  # تثبيت الحزم أثناء البناء (لا يوجد bundling front-end)
+  command = "npm install"
+
+[build.environment]
+  # توحيد إصدار Node في البناء (متوافق مع .nvmrc)
+  NODE_VERSION = "20"
+
+[functions]
+  # مجلد دوال Netlify
+  directory = "netlify/functions"
+  # استخدام esbuild لتجميع الدوال (يدعم ESM)
+  node_bundler = "esbuild"
+  # مهلة افتراضية جيدة (ثوانٍ) — اختياري
+  # external_node_modules = []
+  # included_files = []
+
+#######################################
+# Redirects (API → Serverless Functions)
+#######################################
+
+# Gemini Chat API
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+# Admin Login (JWT)
+[[redirects]]
+  from = "/api/admin/login"
+  to = "/.netlify/functions/admin-auth"
+  status = 200
+
+# Users CRUD & Search
+[[redirects]]
+  from = "/api/users"
+  to = "/.netlify/functions/users"
+  status = 200
+
+#######################################
+# (اختياري) Force HTTPS & Clean URLs
+#######################################
+
+# إجبار HTTPS (Netlify يفعّل تلقائياً عادةً، هذا للتأكيد على المواقع القديمة)
+# [[redirects]]
+#   from = "http://*"
+#   to = "https://:splat"
+#   status = 301
+#   force = true
+
+# إزالة .html من الروابط (Netlify يفعلها افتراضيًا، مذكورة للتوثيق)
+# [build.processing]
+#   skip_processing = true
