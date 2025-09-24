@@ -117,7 +117,7 @@
   <div id="modal" class="hidden">
     <div id="modal-content" role="dialog" aria-modal="true">
       <h3 id="modal-title">إضافة مستخدم</h3>
-      <!-- مُعرّف ثابت خفي لضمان التعديل على نفس السجل -->
+      <!-- مُعرّف ثابت -->
       <input type="hidden" id="m_id" />
       <input type="text" id="m_username" placeholder="اسم المستخدم"/>
       <input type="email" id="m_email" placeholder="البريد"/>
@@ -130,16 +130,14 @@
     </div>
   </div>
 
-  <!-- حاوية Toast -->
+  <!-- Toasts -->
   <div id="toasts"></div>
 
   <!-- ====================== المنطق الأساسي (id ثابت + حفظ حسب id) ====================== -->
   <script>
-    /* اعتماد الأدمن (واجهية فقط) */
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "Admin@2025";
 
-    /* عناصر عامة */
     const loginBox   = document.getElementById("login-box");
     const adminPanel = document.getElementById("admin-panel");
     const loginBtn   = document.getElementById("login-btn");
@@ -159,31 +157,29 @@
       }
     });
 
-    /* توليد id ثابت */
     const genId = () => "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 
-    /* تخزين محلي */
     function getUsers() {
-      const list = JSON.parse(localStorage.getItem("app_users") || "[]");
-      // ترقية بيانات قديمة بلا id لمرة واحدة
+      const raw = localStorage.getItem("app_users");
+      let list = [];
+      try { list = JSON.parse(raw || "[]"); } catch { list = []; }
+      // ترقية قديمة بلا id
       let changed = false;
-      const upgraded = list.map(u => u && u.id ? u : (changed = true, { id: genId(), ...u }));
-      if (changed) localStorage.setItem("app_users", JSON.stringify(upgraded));
-      return upgraded;
+      list = list.map(u => (u && u.id) ? u : (changed = true, { id: genId(), ...u }));
+      if (changed) localStorage.setItem("app_users", JSON.stringify(list));
+      return list;
     }
     function setUsers(users) {
       localStorage.setItem("app_users", JSON.stringify(users));
       try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     }
 
-    /* عناصر الجدول والمودال */
     const tableBody  = document.querySelector("#users-table tbody");
     const modal      = document.getElementById("modal");
     const addBtn     = document.getElementById("add-user-btn");
     const saveBtn    = document.getElementById("save-user");
     const cancelBtn  = document.getElementById("cancel-user");
 
-    /* عرض أساسي للجدول (يوفر أزرار بـ data-id) */
     function renderUsers() {
       const users = getUsers();
       tableBody.innerHTML = "";
@@ -200,24 +196,23 @@
         `;
         tableBody.appendChild(tr);
       });
-      // تفويض أحداث الإجراءات
-      bindRowActions();
+      window.bindRowActions(); // تفويض ثابت
     }
 
-    /* تفويض نقرات التعديل/الحذف لضمان الاستقرار بعد أي إعادة رسم */
-    function bindRowActions() {
+    // تفويض أحداث الصفوف (مُعرّف id فقط)
+    window.bindRowActions = function bindRowActions() {
       tableBody.onclick = (e) => {
         const editBtn = e.target.closest("[data-edit-id]");
         const delBtn  = e.target.closest("[data-del-id]");
         if (editBtn) editUserById(editBtn.getAttribute("data-edit-id"));
         if (delBtn)  deleteUserById(delBtn.getAttribute("data-del-id"));
       };
-    }
+    };
 
-    /* فتح المودال للإضافة */
     addBtn.addEventListener("click", () => {
       document.getElementById("modal-title").textContent = "إضافة مستخدم";
-      document.getElementById("m_id").value = ""; // إضافة جديدة
+      document.getElementById("m_id").value = "";            // جديد
+      saveBtn.dataset.editId = "";                           // مرجعية ثانية آمنة
       document.getElementById("m_username").value = "";
       document.getElementById("m_email").value = "";
       document.getElementById("m_pass").value = "";
@@ -225,12 +220,14 @@
       modal.classList.remove("hidden");
     });
 
-    /* إلغاء/إغلاق المودال */
     cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
-    /* حفظ (تعديل/إضافة) — القرار حسب وجود m_id */
+    // حفظ موثوق: يقرأ id من الحقل المخفي + data-edit-id (احتياطي)
     saveBtn.addEventListener("click", () => {
-      const id       = (document.getElementById("m_id").value || "").trim();
+      const hiddenId = (document.getElementById("m_id").value || "").trim();
+      const attrId   = (saveBtn.dataset.editId || "").trim();
+      const id       = hiddenId || attrId; // أيهما متوفر
+
       const username = document.getElementById("m_username").value.trim();
       const email    = document.getElementById("m_email").value.trim();
       const pass     = document.getElementById("m_pass").value;
@@ -241,13 +238,10 @@
       const users = getUsers();
 
       if (id) {
-        // تعديل حسب id
         const idx = users.findIndex(u => u.id === id);
         if (idx === -1) { alert("تعذر العثور على المستخدم للتعديل."); return; }
-        // السماح بتكرار الاسم إذا نفس السجل
         users[idx] = { ...users[idx], username, email, pass, role };
       } else {
-        // إضافة جديدة (مع منع تكرار الاسم على مستوى القاعدة)
         const exists = users.some(u => String(u.username).trim() === username);
         if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
         users.push({ id: genId(), username, email, pass, role });
@@ -255,15 +249,15 @@
 
       setUsers(users);
       modal.classList.add("hidden");
-      renderUsers();
+      hardFlush(); // إعادة رسم فورية (أدناه)
     });
 
-    /* دوال عامة باستخدام id (جذر المشكلة) */
     function editUserById(id) {
       const user = getUsers().find(u => u.id === id);
       if (!user) return;
       document.getElementById("modal-title").textContent = "تعديل مستخدم";
-      document.getElementById("m_id").value       = user.id;       // << المفتاح
+      document.getElementById("m_id").value       = user.id;   // المفتاح الأساسي
+      saveBtn.dataset.editId                      = user.id;   // مرجعية ثانية للثبات
       document.getElementById("m_username").value = user.username || "";
       document.getElementById("m_email").value    = user.email || "";
       document.getElementById("m_pass").value     = user.pass || "";
@@ -275,15 +269,21 @@
       if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
       const users = getUsers().filter(u => u.id !== id);
       setUsers(users);
-      renderUsers();
+      hardFlush();
     }
 
-    // توافق خلفي لو كان هناك استدعاء قديم بالمؤشر (لن يكسّر شيئًا)
-    window.editUser = function(i) { const u = getUsers()[i]; if (u) editUserById(u.id); };
-    window.deleteUser = function(i) { const u = getUsers()[i]; if (u) deleteUserById(u.id); };
+    // توافق خلفي مع النداءات القديمة بالمؤشر
+    window.editUser   = (i) => { const u = getUsers()[i]; if (u) editUserById(u.id); };
+    window.deleteUser = (i) => { const u = getUsers()[i]; if (u) deleteUserById(u.id); };
+
+    // إعادة رسم مضمونة وآمنة بعد أي تعديل بيانات
+    function hardFlush() {
+      renderUsers();                         // يعيد بناء tbody مع data-id
+      if (typeof window.__renderUsersEnhanced === "function") window.__renderUsersEnhanced();
+    }
   </script>
 
-  <!-- ====================== طبقة التحسينات (فرز/بحث/CSV وتحديث فوري) ====================== -->
+  <!-- ====================== طبقة التحسينات (بحث/فرز/CSV + تحديث فوري) ====================== -->
   <script>
     function initEnhancements() {
       (function () {
@@ -299,7 +299,7 @@
           el.style.borderColor = type==="err" ? "#dc2626" : "#10b981";
           el.textContent = msg;
           box.appendChild(el);
-          setTimeout(()=> el.remove(), 2400);
+          setTimeout(()=> el.remove(), 2200);
         }
 
         function getFilteredSortedUsers() {
@@ -320,7 +320,6 @@
         }
 
         function renderUsersEnhanced() {
-          // إعادة بناء tbody بالكامل من البيانات المُصفّاة/المُرتّبة
           const tbody = document.querySelector("#users-table tbody");
           if (!tbody) return;
           const data = getFilteredSortedUsers();
@@ -338,7 +337,7 @@
             `;
             tbody.appendChild(tr);
           });
-          // إعادة ربط التفويض بعد إعادة الرسم
+          // إعادة ربط التفويض بعد كل إعادة رسم
           if (typeof window.bindRowActions === "function") window.bindRowActions();
 
           const c = document.getElementById("resultsCount");
@@ -365,7 +364,7 @@
 
           if (q) q.addEventListener("input", debounce((e)=>{
             STATE.q = e.target.value; renderUsersEnhanced();
-          }, 200));
+          }, 180));
 
           if (rf) rf.addEventListener("change", (e)=>{
             STATE.role = e.target.value; renderUsersEnhanced();
@@ -382,7 +381,7 @@
             });
           });
 
-          // راقب setUsers لإظهار Toast وإعادة الرسم فورًا
+          // راقب setUsers ليظهر Toast ويُعاد الرسم فورًا
           const _setUsers = window.setUsers;
           if (typeof _setUsers === "function") {
             window.setUsers = function(u) {
@@ -393,19 +392,14 @@
           }
         }
 
-        // API داخلي لندائه بعد أول renderUsers
         window.__renderUsersEnhanced = renderUsersEnhanced;
-
-        // أي تغيير بيانات يطلق إعادة رسم فورية
         window.addEventListener("users:changed", renderUsersEnhanced);
 
-        // تفعيل
         wireControls();
         renderUsersEnhanced();
       })();
     }
 
-    // في حال كانت اللوحة ظاهرة (سيناريو تطوير)
     document.addEventListener("DOMContentLoaded", ()=>{
       if (!document.getElementById("admin-panel").classList.contains("hidden")) {
         initEnhancements();
@@ -413,7 +407,7 @@
     });
   </script>
 
-  <!-- إن كان لديك مزامنة خارجية لاحقًا -->
+  <!-- أي مزامنة خارجية مستقبلًا -->
   <script src="admin-sync.js"></script>
 </body>
 </html>
