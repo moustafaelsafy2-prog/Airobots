@@ -13,15 +13,13 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Cairo', sans-serif;
-      background: #0d1117;
-      color: #e5e7eb;
-      line-height: 1.6;
-      display: flex; flex-direction: column;
-      height: 100vh; height: 100dvh;
+      background: #0d1117; color: #e5e7eb; line-height: 1.6;
+      display: flex; flex-direction: column; height: 100vh; height: 100dvh;
     }
     h1,h2,h3,h4,h5,h6 { font-family: 'Tajawal', sans-serif; margin-bottom: 1rem; }
     p { margin-bottom: 1.5rem; }
 
+    /* --- Core Components & Gradients --- */
     .text-gradient {
       background: linear-gradient(90deg, #60a5fa, #8b5cf6, #ec4899);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
@@ -33,6 +31,7 @@
     }
     .btn-gradient:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,.3); }
 
+    /* --- Sticky areas --- */
     #main-header, #dashboard-header {
       position: sticky; top: 0; z-index: 50;
       background: rgba(13, 17, 23, 0.85);
@@ -40,31 +39,33 @@
       border-bottom: 1px solid #30363d;
     }
     #scroll-wrapper { flex-grow: 1; overflow-y: auto; }
-    #main-footer {
-      position: sticky; bottom: 0; z-index: 50;
-      background: #0d1117; border-top: 1px solid #30363d;
-    }
+    #main-footer { position: sticky; bottom: 0; z-index: 50; background: #0d1117; border-top: 1px solid #30363d; }
 
+    /* --- Hero --- */
     .hero-section {
       background: url('https://images.unsplash.com/photo-1516117172878-fd2dc7981503?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
       position: relative; padding: 8rem 0; overflow: hidden;
     }
     .hero-overlay { background-color: rgba(13,17,23,.8); position: absolute; inset: 0; }
 
-    .card { background-color: #161b22; border: 1px solid #30363d; transition: transform .3s, box-shadow .3s; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
-    .card:hover { transform: translateY(-10px); box-shadow: 0 15px 25px rgba(0,0,0,.4); background-color: #1f242b; }
-
+    /* --- Cards & Robots --- */
+    .card { background:#161b22; border:1px solid #30363d; transition:.3s; box-shadow:0 4px 8px rgba(0,0,0,.2); }
+    .card:hover { transform: translateY(-10px); box-shadow:0 15px 25px rgba(0,0,0,.4); background:#1f242b; }
     .robot-card {
       display:flex; flex-direction:column; align-items:center; text-align:center;
-      background:#161b22; padding:1.5rem; border-radius:1rem;
-      border:1px solid #30363d; box-shadow:0 4px 8px rgba(0,0,0,.2);
-      transition:transform .3s; position:relative; overflow:hidden; cursor:pointer;
+      background:#161b22; padding:1.5rem; border-radius:1rem; border:1px solid #30363d;
+      box-shadow:0 4px 8px rgba(0,0,0,.2); transition:transform .3s; position:relative; overflow:hidden; cursor:pointer;
     }
     .robot-card:hover { transform: translateY(-10px); }
-    .robot-circle { width:120px; height:120px; border-radius:50%; background:linear-gradient(to right, #60a5fa, #8b5cf6); display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden; }
+    .robot-circle {
+      width:120px; height:120px; border-radius:50%;
+      background:linear-gradient(to right, #60a5fa, #8b5cf6);
+      display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden;
+    }
     .robot-image { width:100%; height:100%; object-fit:cover; transition:transform .3s; }
     .robot-card:hover .robot-image { transform:scale(1.1); }
 
+    /* --- FAQ --- */
     .faq-item { background:#161b22; padding:1.5rem; border-radius:.75rem; border:1px solid #30363d; cursor:pointer; transition:background-color .3s; }
     .faq-item:hover { background:#1f242b; }
     .faq-question { display:flex; justify-content:space-between; align-items:center; }
@@ -73,6 +74,7 @@
     .faq-icon { transform:rotate(0); transition:transform .3s; }
     .faq-item.active .faq-icon { transform:rotate(180deg); }
 
+    /* --- Pricing & Badges --- */
     .discount-badge {
       background: linear-gradient(90deg, #60a5fa, #8b5cf6, #ec4899);
       color:#fff; padding:.5rem 1.5rem; border-radius:9999px; font-weight:bold; font-size:1.125rem;
@@ -81,38 +83,53 @@
     .price-box { position:relative; display:inline-block; }
     .icon-svg { width:48px; height:48px; color:#10b981; margin-bottom:1rem; }
 
+    /* --- Modal --- */
     .modal { display:none; position:fixed; z-index:100; inset:0; overflow:auto; background:rgba(0,0,0,.7); backdrop-filter:blur(5px); justify-content:center; align-items:center; }
     .modal-content { background:#161b22; padding:2rem; border:1px solid #30363d; width:90%; max-width:400px; border-radius:1rem; box-shadow:0 10px 25px rgba(0,0,0,.5); animation:fadeIn .3s; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
     .close-btn { color:#aaa; float:left; font-size:28px; font-weight:bold; }
     .close-btn:hover, .close-btn:focus { color:#fff; text-decoration:none; cursor:pointer; }
 
+    /* --- Chat bubbles --- */
     .chat-message { padding:.75rem 1rem; border-radius:.75rem; max-width:85%; word-break:break-word; white-space:pre-wrap; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-    .user-message { background:#056056; color:#fff; align-self:flex-end; text-align:right; border-bottom-right-radius: 0.25rem; }
-    .ai-message   { background:#202c33; color:#fff; align-self:flex-start; text-align:left; border-bottom-left-radius: 0.25rem; }
+    .user-message { background:#056056; color:#fff; align-self:flex-end; text-align:right; border-bottom-right-radius: .25rem; }
+    .ai-message { background:#202c33; color:#fff; align-self:flex-start; text-align:left; border-bottom-left-radius: .25rem; }
 
+    /* --- Mobile & keyboard --- */
     html, body { overscroll-behavior-y:contain; }
     * { -webkit-tap-highlight-color: transparent; }
-
     #robot-chat-messages, #setup-chat-messages { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; overscroll-behavior: contain; padding-bottom: 88px; }
     #robot-chat-interface, #setup-chat-interface {
       display: none; position: fixed; inset:0; background:#0d1117; z-index:90;
-      flex-direction:column; justify-content:space-between;
-      height: 100vh; height: 100dvh; height: calc(var(--vh) * 100);
+      flex-direction:column; justify-content:space-between; height: 100vh; height: 100dvh; height: calc(var(--vh) * 100);
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
-    .chat-input-bar { position: sticky; bottom: 0; left: 0; right: 0; background: rgba(13,17,23,.9); backdrop-filter: blur(6px); border-top: 1px solid #30363d; z-index: 5; padding: 0.5rem; }
+    .chat-input-bar { position: sticky; bottom: 0; left: 0; right: 0; background: rgba(13,17,23,.9); backdrop-filter: blur(6px); border-top: 1px solid #30363d; z-index: 5; padding: .5rem; }
 
     #scroll-to-bottom {
-      position: fixed;
-      inset-inline-end: 1rem;
+      position: fixed; inset-inline-end: 1rem;
       inset-block-end: calc(6rem + env(safe-area-inset-bottom, 0px));
       background: #8b5cf6; color:#fff; border-radius:9999px;
-      padding:.6rem 1rem; font-weight:700; box-shadow: 0 10px 20px rgba(0,0,0,.35);
+      padding:.6rem 1rem; font-weight:700;
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
       display:none; z-index:60; border: 1px solid rgba(255,255,255,0.2);
     }
     #scroll-to-bottom.show { display:inline-flex; align-items:center; gap:.5rem; }
   </style>
+
+  <!-- حراس LocalStorage الآمنون (يُستخدمان لاحقاً) -->
+  <script>
+    function safeGet(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw === null || raw === undefined || raw === "undefined") return fallback;
+        return JSON.parse(raw);
+      } catch (_) { return fallback; }
+    }
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch(_) {}
+    }
+  </script>
 </head>
 <body class="antialiased">
 
@@ -126,7 +143,7 @@
 
   <!-- Scrollable wrapper -->
   <div id="scroll-wrapper">
-    <!-- Landing -->
+    <!-- Main Landing Page Content -->
     <main id="main-content">
       <section class="hero-section text-center relative flex items-center justify-center">
         <div class="hero-overlay"></div>
@@ -137,17 +154,15 @@
           <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
             نقدم لك فريقاً متخصصاً من 12 مساعداً، كل منهم جاهز لإنجاز مهمة محددة بدقة وكفاءة.
           </p>
-          <a href="#" id="start-btn" class="btn-gradient text-white text-lg px-8 py-4 rounded-full">ابدأ الآن</a>
+          <a href="#" class="btn-gradient text-white text-lg px-8 py-4 rounded-full">ابدأ الآن</a>
         </div>
       </section>
 
-      <!-- Pricing -->
+      <!-- Pricing Section -->
       <section class="py-20 bg-gray-900 text-center">
         <div class="container mx-auto px-4">
           <h3 class="text-4xl font-bold mb-4 text-white">عرض حصري مدى الحياة</h3>
-          <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            احصل على وصول كامل وغير محدود إلى جميع المساعدين بسعر استثنائي يدفع لمرة واحدة.
-          </p>
+          <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">احصل على وصول كامل وغير محدود إلى جميع المساعدين بسعر استثنائي يدفع لمرة واحدة.</p>
           <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 max-w-lg mx-auto relative overflow-hidden">
             <div class="discount-badge">خصم ٩٠%</div>
             <div class="relative z-10 flex flex-col items-center">
@@ -195,17 +210,17 @@
             لأننا نؤمن بأن التخصص يولد الكفاءة. بدلاً من الاعتماد على أداة واحدة، نقدم لك فريقاً متكاملاً لإدارة كل جانب من جوانب عملك.
           </p>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="card p-8">
               <div class="text-5xl mb-4 text-gradient">✨</div>
               <h4 class="text-2xl font-bold mb-2 text-white">تخصص لا مثيل له</h4>
               <p class="text-gray-400">كل مساعد مصمم خصيصاً لإتقان مهمته، من التسويق إلى التحليل.</p>
             </div>
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="card p-8">
               <div class="text-5xl mb-4 text-gradient">🚀</div>
               <h4 class="text-2xl font-bold mb-2 text-white">إنجاز المهام بسرعة</h4>
               <p class="text-gray-400">قلل الوقت المستغرق في المهام المتكررة وركز على الابتكار والنمو.</p>
             </div>
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+            <div class="card p-8">
               <div class="text-5xl mb-4 text-gradient">🔗</div>
               <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
               <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
@@ -214,7 +229,7 @@
         </div>
       </section>
 
-      <!-- How It Works -->
+      <!-- How it works -->
       <section class="py-20">
         <div class="container mx-auto px-4 text-center">
           <h3 class="text-4xl font-bold mb-4 text-white">كيف يعمل فريق العون الذكي؟</h3>
@@ -239,7 +254,7 @@
         </div>
       </section>
 
-      <!-- AI Helpers (landing grid) -->
+      <!-- Robots -->
       <section class="py-20 bg-gray-900">
         <div class="container mx-auto px-4 text-center">
           <h3 class="text-4xl font-bold mb-4 text-white">تعرف على فريقك</h3>
@@ -254,15 +269,15 @@
           <h3 class="text-4xl font-bold mb-4 text-white">ماذا يقول عملاؤنا؟</h3>
           <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">قصص نجاح حقيقية من أشخاص وشركات حول العالم.</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <div class="card p-8 text-left">
               <p class="text-lg text-gray-300 mb-4">"فريق العون الذكي غير قواعد اللعبة بالنسبة لشركتنا."</p>
               <p class="font-bold text-white">- أحمد، رائد أعمال</p>
             </div>
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <div class="card p-8 text-left">
               <p class="text-lg text-gray-300 mb-4">"مساعد التسويق عبر البريد الإلكتروني وفّر ساعات وزاد المبيعات."</p>
               <p class="font-bold text-white">- سارة، مديرة تسويق</p>
             </div>
-            <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-left">
+            <div class="card p-8 text-left">
               <p class="text-lg text-gray-300 mb-4">"تحليل البيانات صار أسهل بكثير مع مينا."</p>
               <p class="font-bold text-white">- خالد، محلل بيانات</p>
             </div>
@@ -322,7 +337,6 @@
           </div>
         </div>
       </header>
-
       <section class="py-12">
         <div class="container mx-auto px-4 text-center">
           <h3 class="text-4xl font-bold mb-4 text-white">اختر مساعدك</h3>
@@ -331,6 +345,7 @@
         </div>
       </section>
 
+      <!-- Previous Chats -->
       <section class="py-12 bg-gray-900">
         <div class="container mx-auto px-4">
           <h3 class="text-4xl font-bold mb-6 text-white text-center">محادثاتك السابقة</h3>
@@ -340,9 +355,12 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <footer class="bg-gray-900 text-center py-6" id="main-footer">
     <p class="text-gray-500">&copy; 2023 فريق العون الذكي. جميع الحقوق محفوظة.</p>
   </footer>
+
+  <!-- MODALS & CHAT INTERFACES -->
 
   <!-- Login Modal -->
   <div id="login-modal" class="modal">
@@ -362,7 +380,7 @@
     </div>
   </div>
 
-  <!-- Setup Chat -->
+  <!-- Setup Chat Interface -->
   <div id="setup-chat-interface" class="flex">
     <div class="flex-grow overflow-y-auto p-4 flex flex-col gap-4" id="setup-chat-messages"></div>
     <div class="flex gap-2 p-2 border-t border-gray-700 chat-input-bar">
@@ -371,7 +389,7 @@
     </div>
   </div>
 
-  <!-- Profile -->
+  <!-- Profile Section -->
   <div id="profile-section" class="hidden fixed top-0 left-0 w-full h-full bg-[#0d1117] z-[90] flex-col overflow-y-auto">
     <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700 sticky top-0">
       <button id="back-to-dashboard-from-profile-btn" class="text-white text-2xl">&larr;</button>
@@ -389,7 +407,7 @@
     </div>
   </div>
 
-  <!-- Robot Chat -->
+  <!-- Robot Chat Interface -->
   <div id="robot-chat-interface" class="flex">
     <div class="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700 sticky top-0">
       <button id="back-to-dashboard-btn" class="text-white text-2xl">&larr;</button>
@@ -409,34 +427,31 @@
     </div>
   </div>
 
+  <!-- Scroll to Bottom Button -->
   <button id="scroll-to-bottom" aria-label="اذهب لآخر الرسائل">⬇️ آخر الرسائل</button>
 
   <script>
     /* =============== بيانات الروبوتات =============== */
     const robots = [
-      { name: "ألفا (Alfa)",   specialization: "مساعد التسويق الرقمي",    img: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=800&auto=format&fit=crop" },
-      { name: "فيزي (Vizi)",   specialization: "مساعد المبيعات",          img: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800&auto=format&fit=crop" },
-      { name: "كورتكس (Cortex)", specialization: "مساعد مالي",             img: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop" },
-      { name: "ليكس (Lex)",   specialization: "مساعد خدمة العملاء",        img: "https://images.unsplash.com/photo-1525182008055-f88b95ff7980?q=80&w=800&auto=format&fit=crop" },
-      { name: "أوكتو (Octo)", specialization: "مساعد العمليات",            img: "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?q=80&w=800&auto=format&fit=crop" },
-      { name: "مينا (Mina)",   specialization: "مساعد تحليل البيانات",     img: "https://images.unsplash.com/photo-1556761175-4b46a572b786?q=80&w=800&auto=format&fit=crop" },
-      { name: "بولت (Bolt)",   specialization: "مساعد إدارة المشاريع",     img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=800&auto=format&fit=crop" },
-      { name: "ريكس (Rex)",    specialization: "مساعد الإدارة المالية",    img: "https://images.unsplash.com/photo-1554224154-22dec7ec8818?q=80&w=800&auto=format&fit=crop" },
-      { name: "بادي (Buddy)",  specialization: "مساعد العلاقات العامة",     img: "https://images.unsplash.com/photo-1520975922325-24baf8635f3b?q=80&w=800&auto=format&fit=crop" },
-      { name: "روفر (Rover)",  specialization: "مساعد علاقات العملاء",     img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop" },
+      { name: "ألفا (Alfa)",   specialization: "مساعد التسويق الرقمي", img: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=800&auto=format&fit=crop" },
+      { name: "فيزي (Vizi)",   specialization: "مساعد المبيعات", img: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800&auto=format&fit=crop" },
+      { name: "كورتكس (Cortex)", specialization: "مساعد مالي", img: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop" },
+      { name: "ليكس (Lex)",   specialization: "مساعد خدمة العملاء", img: "https://images.unsplash.com/photo-1525182008055-f88b95ff7980?q=80&w=800&auto=format&fit=crop" },
+      { name: "أوكتو (Octo)", specialization: "مساعد العمليات", img: "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?q=80&w=800&auto=format&fit=crop" },
+      { name: "مينا (Mina)",   specialization: "مساعد تحليل البيانات", img: "https://images.unsplash.com/photo-1556761175-4b46a572b786?q=80&w=800&auto=format&fit=crop" },
+      { name: "بولت (Bolt)",   specialization: "مساعد إدارة المشاريع", img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=800&auto=format&fit=crop" },
+      { name: "ريكس (Rex)",     specialization: "مساعد الإدارة المالية", img: "https://images.unsplash.com/photo-1554224154-22dec7ec8818?q=80&w=800&auto=format&fit=crop" },
+      { name: "بادي (Buddy)", specialization: "مساعد العلاقات العامة", img: "https://images.unsplash.com/photo-1520975922325-24baf8635f3b?q=80&w=800&auto=format&fit=crop" },
+      { name: "روفر (Rover)", specialization: "مساعد علاقات العملاء", img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop" },
       { name: "فالور (Valor)", specialization: "مساعد التجارة الإلكترونية", img: "https://images.unsplash.com/photo-1512295767273-ac109ac3acfa?q=80&w=800&auto=format&fit=crop" },
-      { name: "زينيث (Zenith)",specialization: "مساعد الابتكار",            img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop" },
+      { name: "زينيث (Zenith)", specialization: "مساعد الابتكار", img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop" },
     ];
 
-    /* FAQ toggle */
-    document.addEventListener('click', (e) => {
-      const item = e.target.closest('.faq-item');
-      if (item) item.classList.toggle('active');
-    });
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => item.addEventListener('click', () => item.classList.toggle('active')));
 
-    /* عناصر الواجهة */
+    // UI elements
     const loginBtn = document.getElementById('login-btn');
-    const startBtn = document.getElementById('start-btn');
     const loginModal = document.getElementById('login-modal');
     const closeModal = document.querySelector('.close-btn');
     const submitLogin = document.getElementById('submit-login');
@@ -448,22 +463,26 @@
     const scrollWrapper = document.getElementById('scroll-wrapper');
     const mainFooter = document.getElementById('main-footer');
 
+    // Setup Chat
     const setupChatInterface = document.getElementById('setup-chat-interface');
     const setupChatMessages = document.getElementById('setup-chat-messages');
     const setupChatInput = document.getElementById('setup-chat-input');
     const setupChatSendBtn = document.getElementById('setup-chat-send-btn');
 
+    // Dashboard
     const dashboardContainer = document.getElementById('dashboard-container');
     const robotListContainer = document.getElementById('robot-list');
     const conversationsListContainer = document.getElementById('conversations-list');
     const profileBtn = document.getElementById('profile-btn');
     const logoutBtn = document.getElementById('logout-btn');
 
+    // Profile
     const profileSection = document.getElementById('profile-section');
     const backToDashboardFromProfileBtn = document.getElementById('back-to-dashboard-from-profile-btn');
     const basicDataContainer = document.getElementById('basic-data');
     const learnedDataContainer = document.getElementById('learned-data');
 
+    // Robot Chat
     const robotChatInterface = document.getElementById('robot-chat-interface');
     const robotChatHeader = document.getElementById('robot-chat-header');
     const robotChatMessages = document.getElementById('robot-chat-messages');
@@ -472,54 +491,51 @@
     const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
     const fileUploadInput = document.getElementById('file-upload');
 
-    /* حالات */
+    // State
     let setupChatState = 0;
     let companyData = {};
     let currentRobot = null;
     let robotChatState = {};
-    let aiLearnedData = JSON.parse(localStorage.getItem('aiLearnedData')) || {};
+    let aiLearnedData = safeGet('aiLearnedData', {});
 
-    /* اجعل المتغيرات/الدوال متاحة للـ Patch Scripts */
-    window.currentRobot = currentRobot;
+    const setupPrompts = [
+      { id: 'name', text: "مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟" },
+      { id: 'industry', text: "شكراً. وما هو مجال عمل شركتك الرئيسي؟ (مثلاً: التجارة الإلكترونية، الخدمات المالية، التكنولوجيا)" },
+      { id: 'size', text: "فهمت. وكم عدد الموظفين في شركتك؟" },
+      { id: 'audience', text: "تمام. من هو جمهوركم المستهدف؟ (مثلاً: أصحاب الأعمال الصغيرة، الشباب، العائلات)" },
+      { id: 'goals', text: "رائع. أخيراً، ما هي أهدافك الرئيسية من استخدام أدواتنا؟ (مثلاً: زيادة المبيعات، تحسين خدمة العملاء، التوسع في سوق جديد)" }
+    ];
+
+    // إضافة رسالة إلى محادثة
     function addMessage(chatContainer, text, sender) {
-      const el = document.createElement('div');
-      el.classList.add('chat-message', `${sender}-message`);
-      el.textContent = text;
-      chatContainer.appendChild(el);
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message', `${sender}-message`);
+      messageElement.textContent = text;
+      chatContainer.appendChild(messageElement);
     }
-    window.addMessage = addMessage;
 
-    /* زر البدء يفتح تسجيل الدخول */
-    const openLogin = (e) => { if (e) e.preventDefault(); loginModal.style.display = 'flex'; };
-    loginBtn.addEventListener('click', openLogin);
-    if (startBtn) startBtn.addEventListener('click', openLogin);
+    /* --- Landing & Login --- */
+    loginBtn.addEventListener('click', (e) => { e.preventDefault(); loginModal.style.display = 'flex'; });
     closeModal.addEventListener('click', () => { loginModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === loginModal) loginModal.style.display = 'none'; });
 
-    /* تسجيل الدخول */
     submitLogin.addEventListener('click', () => {
-      const username = usernameInput.value.trim();
+      const username = usernameInput.value;
       const password = passwordInput.value;
       if (username === 'Aiagent' && password === '2222') {
         loginMessage.textContent = 'تم تسجيل الدخول بنجاح!'; loginMessage.style.color = '#10b981';
         setTimeout(() => {
           loginModal.style.display = 'none';
-          if (localStorage.getItem('companyData')) { showDashboard(); } else { startSetupChat(); }
+          const company = safeGet('companyData', null);
+          if (company && typeof company === 'object' && Object.keys(company).length) { showDashboard(); }
+          else { startSetupChat(); }
         }, 800);
       } else {
         loginMessage.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.'; loginMessage.style.color = '#ef4444';
       }
     });
 
-    /* Setup Chat */
-    const setupPrompts = [
-      { id: 'name',     text: "مرحباً بك! أنا مساعد الإعداد الذكي. قبل أن نبدأ، ما هو اسم شركتك؟" },
-      { id: 'industry', text: "شكراً. وما هو مجال عمل شركتك الرئيسي؟ (مثلاً: التجارة الإلكترونية، الخدمات المالية، التكنولوجيا)" },
-      { id: 'size',     text: "فهمت. وكم عدد الموظفين في شركتك؟" },
-      { id: 'audience', text: "تمام. من هو جمهوركم المستهدف؟ (مثلاً: أصحاب الأعمال الصغيرة، الشباب، العائلات)" },
-      { id: 'goals',    text: "رائع. أخيراً، ما هي أهدافك الرئيسية من استخدام أدواتنا؟ (مثلاً: زيادة المبيعات، تحسين خدمة العملاء، التوسع في سوق جديد)" }
-    ];
-
+    /* --- Setup Chat --- */
     function startSetupChat() {
       mainContent.classList.add('hidden');
       mainHeader.classList.add('hidden');
@@ -533,7 +549,7 @@
 
     function handleSetupChatInput() {
       const userMessage = setupChatInput.value.trim();
-      if (!userMessage) return;
+      if (userMessage === '') return;
       addMessage(setupChatMessages, userMessage, 'user');
       const currentPromptId = setupPrompts[setupChatState].id;
       companyData[currentPromptId] = userMessage;
@@ -544,13 +560,16 @@
           addMessage(setupChatMessages, setupPrompts[setupChatState].text, 'ai');
         } else {
           addMessage(setupChatMessages, "ممتاز! لقد اكتمل ملفك بنجاح. يتم الآن إعداد أدواتك.", 'ai');
-          localStorage.setItem('companyData', JSON.stringify(companyData));
-          setTimeout(() => { addMessage(setupChatMessages, "أهلاً بك في فريق العون الذكي!", 'ai'); setupChatInterface.style.display = 'none'; showDashboard(); }, 1200);
+          safeSet('companyData', companyData);
+          setTimeout(() => {
+            addMessage(setupChatMessages, "أهلاً بك في فريق العون الذكي!", 'ai');
+            setupChatInterface.style.display = 'none'; showDashboard();
+          }, 1200);
         }
-      }, 500);
+      }, 600);
     }
 
-    /* Dashboard */
+    /* --- Dashboard --- */
     function showDashboard() {
       mainContent.classList.add('hidden');
       scrollWrapper.classList.remove('hidden');
@@ -560,8 +579,7 @@
       profileSection.classList.add('hidden');
       robotChatInterface.style.display = 'none';
       setupChatInterface.style.display = 'none';
-      renderRobotList();
-      renderConversationsList();
+      renderRobotList(); renderConversationsList();
     }
 
     function renderRobotList() {
@@ -586,8 +604,8 @@
       conversationsListContainer.innerHTML = '';
       let hasConversations = false;
       robots.forEach(robot => {
-        const conversation = JSON.parse(localStorage.getItem(`conversation_${robot.name}`) || '[]');
-        if (conversation.length) {
+        const conversation = safeGet(`conversation_${robot.name}`, []);
+        if (Array.isArray(conversation) && conversation.length > 0) {
           hasConversations = true;
           const listItem = document.createElement('div');
           listItem.className = 'bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors';
@@ -601,57 +619,107 @@
       }
     }
 
-    /* الملف الشخصي */
+    /* --- Profile --- */
     profileBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      scrollWrapper.classList.add('hidden');
-      mainFooter.classList.add('hidden');
-      profileSection.classList.remove('hidden');
-      updateProfileSection();
+      scrollWrapper.classList.add('hidden'); mainFooter.classList.add('hidden'); profileSection.classList.remove('hidden'); updateProfileSection();
     });
     backToDashboardFromProfileBtn.addEventListener('click', () => {
-      profileSection.classList.add('hidden');
-      scrollWrapper.classList.remove('hidden');
-      mainFooter.classList.remove('hidden');
+      profileSection.classList.add('hidden'); scrollWrapper.classList.remove('hidden'); mainFooter.classList.remove('hidden');
     });
 
     function updateProfileSection() {
-      const basicData = JSON.parse(localStorage.getItem('companyData') || '{}');
-      const learnedData = JSON.parse(localStorage.getItem('aiLearnedData') || '{}');
+      const basicData = safeGet('companyData', {});
+      const learnedData = safeGet('aiLearnedData', {});
       basicDataContainer.innerHTML = `
         <p class="text-gray-300 mb-2"><b>اسم الشركة:</b> ${basicData.name || 'غير متوفر'}</p>
         <p class="text-gray-300 mb-2"><b>مجال العمل:</b> ${basicData.industry || 'غير متوفر'}</p>
         <p class="text-gray-300 mb-2"><b>الأهداف:</b> ${basicData.goals || 'غير متوفر'}</p>
       `;
       learnedDataContainer.innerHTML = '';
-      const learnedKeys = Object.keys(learnedData);
-      if (learnedKeys.length) {
+      const learnedKeys = Object.keys(learnedData || {});
+      if (learnedKeys.length > 0) {
         learnedKeys.forEach(key => { learnedDataContainer.innerHTML += `<p class="text-gray-300 mb-2"><b>${key}:</b> ${learnedData[key]}</p>`; });
       } else {
         learnedDataContainer.innerHTML = `<p class="text-gray-400">لا توجد معلومات إضافية حتى الآن. ابدأ محادثة مع مساعديك!</p>`;
       }
     }
 
-    /* Seed Prompts */
+    /* --- Seed Prompts --- */
     const robotPrompts = {
-      "ألفا (Alfa)":  [{ role: 'ai', text: 'أنا ألفا (تسويق). حدِّد هدف الحملة (مبيعات/وعي/عملاء جدد) + المنتج والجمهور والميزانية والزمن لنصمم مسارًا سريعًا.' }],
-      "فيزي (Vizi)":  [{ role: 'ai', text: 'أنا فيزي (مبيعات). أرسل منتجك وسعره وأهم اعتراض يتكرر؛ سأعطيك Playbook مكالمات ورسائل متابعة محسّنة.' }],
+      "ألفا (Alfa)":   [{ role: 'ai', text: 'أنا ألفا (تسويق). حدِّد هدف الحملة (مبيعات/وعي/عملاء جدد) + المنتج والجمهور والميزانية والزمن لنصمم مسارًا سريعًا.' }],
+      "فيزي (Vizi)":   [{ role: 'ai', text: 'أنا فيزي (مبيعات). أرسل منتجك وسعره وأهم اعتراض يتكرر؛ سأعطيك Playbook مكالمات ورسائل متابعة محسّنة.' }],
       "كورتكس (Cortex)": [{ role: 'ai', text: 'أنا كورتكس (مالي). اكتب الإيرادات/المصروفات الشهرية والهدف الربحي؛ سأبني لك ميزانية وتتبُّع تدفق نقدي ومؤشرات.' }],
-      "ليكس (Lex)":   [{ role: 'ai', text: 'أنا ليكس (خدمة العملاء). صف المشكلة ونوع القناة (واتساب/بريد/هاتف) وزمن الاستجابة؛ سأقترح قوالب وردود وسياسة تصعيد.' }],
-      "أوكتو (Octo)": [{ role: 'ai', text: 'أنا أوكتو (عمليات). ما العملية المرهِقة الآن؟ سأقدّم SOP مختصر + أتمتة بأدوات جاهزة وخطوات تنفيذ.' }],
-      "مينا (Mina)":  [{ role: 'ai', text: 'أنا مينا (تحليلات). ما السؤال التجاري؟ أرسل حقول البيانات المتاحة وسأبني أسئلة فرضية ومقاييس Dashboard قابلة للتنفيذ.' }],
-      "بولت (Bolt)":  [{ role: 'ai', text: 'أنا بولت (مشاريع). اذكر اسم المشروع والموعد النهائي والموارد؛ سأخرج WBS وخطة أسبوعية ومخاطر وإجراءات تخفيف.' }],
-      "ريكس (Rex)":   [{ role: 'ai', text: 'أنا ريكس (إدارة مالية تشغيلية). ما القسم الأعلى تكلفة؟ سأقترح سياسات صرف وبنود خفض ذكية دون التأثير على الجودة.' }],
-      "بادي (Buddy)": [{ role: 'ai', text: 'أنا بادي (علاقات عامة). حدد الرسالة والجمهور والقناة؛ سأبني حزمة محتوى وجدول نشر ونماذج بيان صحفي.' }],
-      "روفر (Rover)":[{ role: 'ai', text: 'أنا روفر (CRM). أعطني شرائحك الحالية وقيمة الطلب؛ سأصمم رحلات تفعيل/احتفاظ وعروض ولاء.' }],
-      "فالور (Valor)":[{ role: 'ai', text: 'أنا فالور (تجارة إلكترونية). أرسل رابط المنتج ونسبة التحويل الحالية؛ سأشخّص الصفحة وأقترح اختبارات A/B.' }],
+      "ليكس (Lex)":    [{ role: 'ai', text: 'أنا ليكس (خدمة العملاء). صف المشكلة ونوع القناة (واتساب/بريد/هاتف) وزمن الاستجابة؛ سأقترح قوالب وردود وسياسة تصعيد.' }],
+      "أوكتو (Octo)":  [{ role: 'ai', text: 'أنا أوكتو (عمليات). ما العملية المرهِقة الآن؟ سأقدّم SOP مختصر + أتمتة بأدوات جاهزة وخطوات تنفيذ.' }],
+      "مينا (Mina)":   [{ role: 'ai', text: 'أنا مينا (تحليلات). ما السؤال التجاري؟ أرسل حقول البيانات المتاحة وسأبني أسئلة فرضية ومقاييس Dashboard قابلة للتنفيذ.' }],
+      "بولت (Bolt)":   [{ role: 'ai', text: 'أنا بولت (مشاريع). اذكر اسم المشروع والموعد النهائي والموارد؛ سأخرج WBS وخطة أسبوعية ومخاطر وإجراءات تخفيف.' }],
+      "ريكس (Rex)":    [{ role: 'ai', text: 'أنا ريكس (إدارة مالية تشغيلية). ما القسم الأعلى تكلفة؟ سأقترح سياسات صرف وبنود خفض ذكية دون التأثير على الجودة.' }],
+      "بادي (Buddy)":  [{ role: 'ai', text: 'أنا بادي (علاقات عامة). حدد الرسالة والجمهور والقناة؛ سأبني حزمة محتوى وجدول نشر ونماذج بيان صحفي.' }],
+      "روفر (Rover)":  [{ role: 'ai', text: 'أنا روفر (CRM). أعطني شرائحك الحالية وقيمة الطلب؛ سأصمم رحلات تفعيل/احتفاظ وعروض ولاء.' }],
+      "فالور (Valor)": [{ role: 'ai', text: 'أنا فالور (تجارة إلكترونية). أرسل رابط المنتج ونسبة التحويل الحالية؛ سأشخّص الصفحة وأقترح اختبارات A/B.' }],
       "زينيث (Zenith)":[{ role: 'ai', text: 'أنا زينيث (ابتكار). اذكر الفكرة والسوق المستهدف وأبسط MVP ممكن؛ سأبني Canvas وخطة تحقق سريعة.' }]
     };
 
-    /* افتح محادثة روبوت */
+    /* ================== Gemini Bridge (Netlify) ================== */
+    const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
+    function currentPersona() { return typeof currentRobot === "string" ? currentRobot : ""; }
+
+    function recentConversationFor(robotName, limit = 20) {
+      const conv = safeGet(`conversation_${robotName}`, []);
+      return (Array.isArray(conv) ? conv : []).slice(-limit).map(m => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        text: m.text
+      }));
+    }
+
+    function withTimeout(promise, ms = 20000) {
+      const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
+      return Promise.race([promise, t]);
+    }
+
+    function inferIntent(text) {
+      const t = text.toLowerCase();
+      if (t.includes('حملة') || t.includes('اعلان') || t.includes('تسويق')) return 'marketing';
+      if (t.includes('مبيعات') || t.includes('تحويل') || t.includes('عميل محتمل')) return 'sales';
+      if (t.includes('ميزانية') || t.includes('تكلفة') || t.includes('ربح') || t.includes('تدفق')) return 'finance';
+      if (t.includes('شكوى') || t.includes('تذكرة') || t.includes('رضا')) return 'support';
+      if (t.includes('مشروع') || t.includes('موعد') || t.includes('خطة')) return 'pm';
+      if (t.includes('تحليل') || t.includes('بيانات') || t.includes('تقرير')) return 'analytics';
+      if (t.includes('وفاء') || t.includes('crm') || t.includes('ولاء')) return 'crm';
+      if (t.includes('متجر') || t.includes('سلة') || t.includes('منتج')) return 'ecom';
+      if (t.includes('فكرة') || t.includes('mvp') || t.includes('ابتكار')) return 'innovation';
+      return 'general';
+    }
+
+    async function geminiReply(userText, persona = "") {
+      const company = safeGet("companyData", {});
+      const history = recentConversationFor(currentRobot || persona);
+      const body = {
+        messages: [...history, { role: "user", text: userText }],
+        persona,
+        company,
+        meta: { intent: inferIntent(userText) }
+      };
+
+      const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }));
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status} - ${txt}`);
+      }
+      const data = await res.json();
+      return (data && data.text) ? data.text : "لم أستقبل ردًا من النموذج.";
+    }
+    function addAIMessage(text) { addMessage(robotChatMessages, text, "ai"); }
+
+    /* --- Robot Chat Flow --- */
     function startRobotChat(robotName) {
       currentRobot = robotName;
-      window.currentRobot = currentRobot; // مزامنة مع الـ Patch
       mainHeader.classList.add('hidden');
       scrollWrapper.classList.add('hidden');
       mainFooter.classList.add('hidden');
@@ -659,12 +727,12 @@
       robotChatHeader.textContent = `محادثة مع ${robotName}`;
       robotChatMessages.innerHTML = '';
 
-      const savedConversation = JSON.parse(localStorage.getItem(`conversation_${robotName}`) || '[]');
-      if (savedConversation.length) {
+      const savedConversation = safeGet(`conversation_${robotName}`, []);
+      if (Array.isArray(savedConversation) && savedConversation.length > 0) {
         savedConversation.forEach(msg => addMessage(robotChatMessages, msg.text, msg.sender));
       } else {
         robotChatState[robotName] = 0;
-        if (robotPrompts[robotName] && robotPrompts[robotName].length) {
+        if (robotPrompts[robotName] && robotPrompts[robotName].length > 0) {
           addMessage(robotChatMessages, robotPrompts[robotName][0].text, 'ai');
         } else {
           addMessage(robotChatMessages, "عذراً، لا يمكنني بدء المحادثة الآن. يرجى العودة لاحقاً.", 'ai');
@@ -680,117 +748,54 @@
       window.location.reload();
     });
 
-    /* رفع ملف */
     fileUploadInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (!file) return;
-      addMessage(robotChatMessages, `تم تحميل الملف: ${file.name}. جاري تحليله...`, 'user');
-      setTimeout(() => {
-        const aiResponse = `شكراً لك. تم تحليل الملف. ما سؤالك بخصوصه؟`;
-        addMessage(robotChatMessages, aiResponse, 'ai');
-        const saved = JSON.parse(localStorage.getItem(`conversation_${currentRobot}`) || '[]');
-        saved.push({ text: `تم رفع ملف: ${file.name}`, sender: 'user' });
-        saved.push({ text: aiResponse, sender: 'ai' });
-        localStorage.setItem(`conversation_${currentRobot}`, JSON.stringify(saved));
-      }, 800);
-    });
-
-    /* ======= Gemini Bridge ======= */
-    const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
-    function currentPersona() { return typeof currentRobot === "string" ? currentRobot : ""; }
-    window.currentPersona = currentPersona;
-
-    function recentConversationFor(robotName, limit = 20) {
-      const conv = JSON.parse(localStorage.getItem(`conversation_${robotName}`) || "[]");
-      return conv.slice(-limit).map(m => ({
-        role: m.sender === "user" ? "user" : "assistant",
-        text: m.text
-      }));
-    }
-    window.recentConversationFor = recentConversationFor;
-
-    function withTimeout(promise, ms = 20000) {
-      const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
-      return Promise.race([promise, t]);
-    }
-
-    function inferIntent(text) {
-      const t = (text || "").toLowerCase();
-      if (t.includes('حملة') || t.includes('اعلان') || t.includes('تسويق')) return 'marketing';
-      if (t.includes('مبيعات') || t.includes('تحويل') || t.includes('عميل محتمل')) return 'sales';
-      if (t.includes('ميزانية') || t.includes('تكلفة') || t.includes('ربح') || t.includes('تدفق')) return 'finance';
-      if (t.includes('شكوى') || t.includes('تذكرة') || t.includes('رضا')) return 'support';
-      if (t.includes('مشروع') || t.includes('موعد') || t.includes('خطة')) return 'pm';
-      if (t.includes('تحليل') || t.includes('بيانات') || t.includes('تقرير')) return 'analytics';
-      if (t.includes('وفاء') || t.includes('crm') || t.includes('ولاء')) return 'crm';
-      if (t.includes('متجر') || t.includes('سلة') || t.includes('منتج')) return 'ecom';
-      if (t.includes('فكرة') || t.includes('mvp') || t.includes('ابتكار')) return 'innovation';
-      return 'general';
-    }
-    window.inferIntent = inferIntent;
-
-    async function geminiReply(userText, persona = "") {
-      const company = JSON.parse(localStorage.getItem("companyData") || "{}");
-      const history = recentConversationFor(window.currentRobot || persona);
-      const langFromDom = (document.documentElement && document.documentElement.lang ? document.documentElement.lang : "").slice(0,2).toLowerCase();
-      const lang = (langFromDom === "ar" || langFromDom === "en")
-        ? langFromDom
-        : ((navigator.language || "ar").slice(0,2).toLowerCase());
-
-      const body = {
-        messages: [...history, { role: "user", text: userText }],
-        persona,
-        company,
-        meta: { intent: inferIntent(userText), lang }
-      };
-
-      const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }));
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status} - ${txt}`);
+      if (file) {
+        addMessage(robotChatMessages, `تم تحميل الملف: ${file.name}. جاري تحليله...`, 'user');
+        setTimeout(() => {
+          const aiResponse = `شكراً لك. تم تحليل الملف. ما سؤالك بخصوصه؟`;
+          addMessage(robotChatMessages, aiResponse, 'ai');
+          const savedConversation = safeGet(`conversation_${currentRobot}`, []);
+          savedConversation.push({ text: `تم رفع ملف: ${file.name}`, sender: 'user' });
+          savedConversation.push({ text: aiResponse, sender: 'ai' });
+          safeSet(`conversation_${currentRobot}`, savedConversation);
+        }, 1200);
       }
-      const data = await res.json();
-      return (data && data.text) ? data.text : (lang === "ar" ? "لم أستقبل ردًا من النموذج." : "No response from the model.");
-    }
-    window.geminiReply = geminiReply;
-
-    function addAIMessage(text) { addMessage(robotChatMessages, text, "ai"); }
+    });
 
     function handleRobotChatInput() {
       const userMessage = robotChatInput.value.trim();
-      if (!window.currentRobot) { addAIMessage("⚠️ اختر مساعدًا أولًا من لوحة التحكم."); return; }
-      if (!userMessage) return;
+      if (!currentRobot) { addAIMessage("⚠️ اختر مساعدًا أولًا من لوحة التحكم."); return; }
+      if (userMessage === '') return;
 
       addMessage(robotChatMessages, userMessage, 'user');
-      const savedConversation = JSON.parse(localStorage.getItem(`conversation_${window.currentRobot}`) || '[]');
+
+      const savedConversation = safeGet(`conversation_${currentRobot}`, []);
       savedConversation.push({ text: userMessage, sender: 'user' });
+
       robotChatInput.value = '';
 
       (async () => {
         try {
-          const reply = await window.geminiReply(userMessage, currentPersona());
+          const reply = await geminiReply(userMessage, currentPersona());
           addAIMessage(reply);
           savedConversation.push({ text: reply, sender: 'ai' });
-          localStorage.setItem(`conversation_${window.currentRobot}`, JSON.stringify(savedConversation));
+          safeSet(`conversation_${currentRobot}`, savedConversation);
         } catch (err) {
           console.error(err);
           const fallback = `⚠️ تعذّر الاتصال بالذكاء الاصطناعي:\n${err.message}`;
           addAIMessage(fallback);
           savedConversation.push({ text: fallback, sender: 'ai' });
-          localStorage.setItem(`conversation_${window.currentRobot}`, JSON.stringify(savedConversation));
+          safeSet(`conversation_${currentRobot}`, savedConversation);
         }
       })();
     }
 
     robotChatSendBtn.addEventListener('click', handleRobotChatInput);
-    robotChatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleRobotChatInput(); } });
+    robotChatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleRobotChatInput(); }
+    });
 
-    /* Landing robots grid (cards غير قابلة للنقر) */
     document.addEventListener('DOMContentLoaded', () => {
       const robotsGrid = document.getElementById('robots-grid');
       if (robotsGrid) {
@@ -807,7 +812,7 @@
       }
     });
 
-    /* ====== إصلاحات الموبايل: vh + لوحة المفاتيح + زر آخر الرسائل ====== */
+    /* ====== Mobile fixes: vh & keyboard & bottom button ====== */
     function setVH() {
       const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -859,7 +864,7 @@
         if (!container) return;
         const mo = new MutationObserver((mutations) => {
           const added = mutations.some(m => m.addedNodes && m.addedNodes.length);
-          if (added) maybeAutoScroll(container);
+          if (added) { maybeAutoScroll(container); }
         });
         mo.observe(container, { childList: true, subtree: false });
       }
@@ -886,7 +891,7 @@
       inputElements.forEach(inputEl => {
         inputEl.addEventListener('focus', () => {
           const activeContainer = inputEl.id === 'robot-chat-input' ? robotChatMessagesEl : setupChatMessagesEl;
-          if (activeContainer) activeContainer.scrollTo({ top: activeContainer.scrollHeight, behavior: 'smooth' });
+          if (activeContainer) { activeContainer.scrollTo({ top: activeContainer.scrollHeight, behavior: 'smooth' }); }
         });
       });
 
@@ -903,7 +908,120 @@
     })();
   </script>
 
-  <!-- Patch (يرسل meta.lang ويحفظ memoryPatch عبر الدالة المغلفة في chat.js) -->
+  <!-- تحميل الجسر مرة واحدة فقط -->
+  <script src="auth-bridge-global.js"></script>
+
+  <!-- Patch Add-on: تمرير meta.lang + رفع الملفات + حفظ الذاكرة -->
+  <script>
+  (() => {
+    const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
+
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        try {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const res = String(reader.result || "");
+            const base64 = res.includes(",") ? res.split(",")[1] : res;
+            resolve({ base64, mime: file.type || "application/octet-stream", name: file.name || "file" });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        } catch (e) { reject(e); }
+      });
+    }
+
+    function withTimeout(promise, ms = 20000) {
+      const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
+      return Promise.race([promise, t]);
+    }
+
+    const getPersona = () => (typeof window.currentPersona === "function" ? window.currentPersona() : (window.currentRobot || ""));
+    const getHistory = (persona) => (typeof window.recentConversationFor === "function"
+      ? window.recentConversationFor(window.currentRobot || persona)
+      : []);
+
+    try { window.__origGeminiReply = window.geminiReply; } catch {}
+
+    // override آمن مع لغة الواجهة
+    async function geminiReply_v2(userText, persona = "", files = []) {
+      const company = safeGet("companyData", {});
+      const history = getHistory(persona);
+      const langFromDom = (document.documentElement && document.documentElement.lang ? document.documentElement.lang : "").slice(0,2).toLowerCase();
+      const lang = (langFromDom === "ar" || langFromDom === "en")
+        ? langFromDom
+        : ((navigator.language || "ar").slice(0,2).toLowerCase());
+
+      const body = {
+        messages: [...history, { role: "user", text: userText }],
+        persona,
+        company,
+        meta: {
+          intent: (typeof window.inferIntent === "function" ? window.inferIntent(userText) : "general"),
+          lang
+        },
+        files: Array.isArray(files) ? files.map(f => ({ mime: f.mime, base64: f.base64 })) : []
+      };
+
+      const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }));
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status} - ${txt || "request failed"}`);
+      }
+
+      const data = await res.json().catch(() => ({}));
+
+      if (data && data.memoryPatch && typeof data.memoryPatch === "object") {
+        try {
+          const prev = safeGet("aiLearnedData", {});
+          const next = { ...prev, ...data.memoryPatch };
+          safeSet("aiLearnedData", next);
+        } catch {}
+      }
+      return (data && data.text) ? data.text : (lang === "ar" ? "لم أستقبل ردًا من النموذج." : "No response from the model.");
+    }
+
+    window.geminiReply = geminiReply_v2;
+
+    const fileInput = document.getElementById("file-upload");
+    if (fileInput) {
+      fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const personaName = getPersona();
+        const chatContainer = document.getElementById("robot-chat-messages");
+        const userMsg = `تم رفع "${file.name}" — جاري التحليل...`;
+        if (typeof window.addMessage === "function") window.addMessage(chatContainer, userMsg, "user");
+
+        const convKey = `conversation_${window.currentRobot}`;
+        const saved = safeGet(convKey, []);
+        saved.push({ text: userMsg, sender: "user" });
+
+        try {
+          const f = await fileToBase64(file);
+          const aiReply = await window.geminiReply("حلّل هذا الملف وقدّم توصيات عملية لاختبارات/خطوات قابلة للتنفيذ.", personaName, [f]);
+          if (typeof window.addMessage === "function") window.addMessage(chatContainer, aiReply, "ai");
+          saved.push({ text: aiReply, sender: "ai" });
+          safeSet(convKey, saved);
+        } catch (err) {
+          const fail = `⚠️ تعذّر معالجة الملف: ${err && err.message ? err.message : err}`;
+          if (typeof window.addMessage === "function") window.addMessage(chatContainer, fail, "ai");
+          saved.push({ text: fail, sender: "ai" });
+          safeSet(convKey, saved);
+        }
+        e.target.value = '';
+      });
+    }
+  })();
+  </script>
+
+  <!-- (مرة واحدة فقط) -->
   <script src="auth-bridge-global.js"></script>
 </body>
 </html>
