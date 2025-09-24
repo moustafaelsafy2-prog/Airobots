@@ -565,7 +565,7 @@
     // Chat conversation states
     let setupChatState = 0;
     let companyData = {};
-    let currentRobot = null;
+       let currentRobot = null;
     let robotChatState = {};
     let aiLearnedData = JSON.parse(localStorage.getItem('aiLearnedData')) || {};
 
@@ -775,9 +775,13 @@
     const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
     function currentPersona() { return typeof currentRobot === "string" ? currentRobot : ""; }
 
+    // 🔧 إصلاح: إرجاع role كـ assistant بدل model + استخدام text مباشرة
     function recentConversationFor(robotName, limit = 20) {
       const conv = JSON.parse(localStorage.getItem(`conversation_${robotName}`) || "[]");
-      return conv.slice(-limit).map(m => ({ role: m.sender === "user" ? "user" : "model", text: m.text }));
+      return conv.slice(-limit).map(m => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        text: m.text
+      }));
     }
 
     function withTimeout(promise, ms = 20000) {
@@ -799,13 +803,15 @@
       return 'general';
     }
 
+    // 🔧 إصلاح: إرسال {role,text} فقط + company في المستوى الأعلى
     async function geminiReply(userText, persona = "") {
       const company = JSON.parse(localStorage.getItem("companyData") || "{}");
       const history = recentConversationFor(currentRobot || persona);
       const body = {
-        messages: [...history, { role: "user", parts: [{ text: userText }] }],
+        messages: [...history, { role: "user", text: userText }],
         persona,
-        meta: { company, intent: inferIntent(userText) }
+        company,
+        meta: { intent: inferIntent(userText) }
       };
 
       const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
@@ -1017,30 +1023,19 @@
 
   try { window.__origGeminiReply = window.geminiReply; } catch {}
 
+  // 🔧 إصلاح: إرسال {role,text} والملفات في حقل files العلوي
   async function geminiReply_v2(userText, persona = "", files = []) {
     const company = JSON.parse(localStorage.getItem("companyData") || "{}");
     const history = getHistory(persona);
-    
-    // Construct the 'parts' array with text and file data
-    const userParts = [{ text: userText }];
-    if (Array.isArray(files) && files.length > 0) {
-        files.forEach(file => {
-            userParts.push({
-                inlineData: {
-                    mimeType: file.mime,
-                    data: file.base64
-                }
-            });
-        });
-    }
 
     const body = {
-      messages: [...history, { role: "user", parts: userParts }],
+      messages: [...history, { role: "user", text: userText }],
       persona,
       company,
       meta: {
         intent: (typeof window.inferIntent === "function" ? window.inferIntent(userText) : "general")
-      }
+      },
+      files: Array.isArray(files) ? files.map(f => ({ mime: f.mime, base64: f.base64 })) : []
     };
 
     const res = await withTimeout(fetch(NETLIFY_CHAT_ENDPOINT, {
