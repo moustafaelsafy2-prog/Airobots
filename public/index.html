@@ -435,7 +435,7 @@
     closeModal.addEventListener('click', ()=> loginModal.style.display='none');
     window.addEventListener('click', (e)=>{ if(e.target === loginModal) loginModal.style.display='none'; });
 
-    /* تسجيل الدخول */
+    /* تسجيل الدخول — إصلاح: تحقّق من صلاحية companyData قبل القفز للوحة */
     submitLogin.addEventListener('click', ()=>{
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
@@ -443,7 +443,23 @@
         loginMessage.textContent = 'تم تسجيل الدخول بنجاح!'; loginMessage.style.color = '#10b981';
         setTimeout(()=>{
           loginModal.style.display='none';
-          if(localStorage.getItem('companyData')){ showDashboard(); } else { startSetupChat(); }
+
+          // التحقق الصارم من companyData (اسم + صناعة على الأقل)
+          let stored = localStorage.getItem('companyData');
+          let valid = false;
+          try {
+            const obj = JSON.parse(stored || 'null');
+            valid = obj && typeof obj === 'object' && !!obj.name && !!obj.industry;
+          } catch(_) {}
+
+          if (valid) { 
+            showDashboard(); 
+          } else { 
+            // تنظيف أي بيانات تالفة ثم فتح شاشة الإعداد
+            localStorage.removeItem('companyData');
+            setupChatState = 0; companyData = {};
+            startSetupChat(); 
+          }
         },800);
       } else {
         loginMessage.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.'; loginMessage.style.color = '#ef4444';
@@ -462,7 +478,10 @@
     function startSetupChat(){
       mainContent.classList.add('hidden'); mainHeader.classList.add('hidden');
       scrollWrapper.classList.add('hidden'); mainFooter.classList.add('hidden');
+      // إصلاح: ضمان الظهور والتنظيف قبل أول رسالة
       setupChatInterface.style.display='flex';
+      setupChatInterface.style.zIndex='120';
+      setupChatMessages.innerHTML='';
       addMessage(setupChatMessages, setupPrompts[setupChatState].text, 'ai');
     }
     setupChatSendBtn.addEventListener('click', handleSetupChatInput);
@@ -527,6 +546,9 @@
     }
 
     /* الملف الشخصي */
+    const profileBtn = document.getElementById('profile-btn');
+    const backToDashboardFromProfileBtn = document.getElementById('back-to-dashboard-from-profile-btn');
+
     profileBtn.addEventListener('click',(e)=>{
       e.preventDefault(); scrollWrapper.classList.add('hidden'); mainFooter.classList.add('hidden');
       profileSection.classList.remove('hidden'); updateProfileSection();
@@ -538,6 +560,8 @@
     function updateProfileSection(){
       const basicData = JSON.parse(localStorage.getItem('companyData')||'{}');
       const learnedData = JSON.parse(localStorage.getItem('aiLearnedData')||'{}');
+      const basicDataContainer = document.getElementById('basic-data');
+      const learnedDataContainer = document.getElementById('learned-data');
       basicDataContainer.innerHTML = `
         <p class="text-gray-300 mb-2"><b>اسم الشركة:</b> ${basicData.name||'غير متوفر'}</p>
         <p class="text-gray-300 mb-2"><b>مجال العمل:</b> ${basicData.industry||'غير متوفر'}</p>
@@ -568,6 +592,8 @@
       currentRobot = robotName;
       mainHeader.classList.add('hidden'); scrollWrapper.classList.add('hidden'); mainFooter.classList.add('hidden');
       robotChatInterface.style.display='flex';
+      const robotChatHeader = document.getElementById('robot-chat-header');
+      const robotChatMessages = document.getElementById('robot-chat-messages');
       robotChatHeader.textContent = `محادثة مع ${robotName}`;
       robotChatMessages.innerHTML='';
       const saved = JSON.parse(localStorage.getItem(`conversation_${robotName}`)||'[]');
@@ -584,6 +610,7 @@
     /* رفع ملف */
     fileUploadInput.addEventListener('change', (e)=>{
       const file=e.target.files[0]; if(!file) return;
+      const robotChatMessages = document.getElementById('robot-chat-messages');
       addMessage(robotChatMessages, `تم تحميل الملف: ${file.name}. جاري تحليله...`, 'user');
       setTimeout(()=>{
         const aiResponse='شكراً لك. تم تحليل الملف. ما سؤالك بخصوصه؟';
@@ -641,17 +668,21 @@
     }
     window.geminiReply = geminiReply;
 
-    function addAIMessage(text){ addMessage(robotChatMessages, text, 'ai'); }
+    function addAIMessage(text){ 
+      const robotChatMessages = document.getElementById('robot-chat-messages');
+      addMessage(robotChatMessages, text, 'ai'); 
+    }
 
     function handleRobotChatInput(){
-      const userMessage = robotChatInput.value.trim();
+      const userMessage = document.getElementById('robot-chat-input').value.trim();
+      const robotChatMessages = document.getElementById('robot-chat-messages');
       if(!currentRobot){ addAIMessage('⚠️ اختر مساعدًا أولًا من لوحة التحكم.'); return; }
       if(!userMessage) return;
       addMessage(robotChatMessages, userMessage, 'user');
 
       const saved = JSON.parse(localStorage.getItem(`conversation_${currentRobot}`)||'[]');
       saved.push({text:userMessage, sender:'user'});
-      robotChatInput.value='';
+      document.getElementById('robot-chat-input').value='';
 
       (async()=>{
         try{
@@ -669,8 +700,8 @@
       })();
     }
 
-    robotChatSendBtn.addEventListener('click', handleRobotChatInput);
-    robotChatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleRobotChatInput(); } });
+    document.getElementById('robot-chat-send-btn').addEventListener('click', handleRobotChatInput);
+    document.getElementById('robot-chat-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleRobotChatInput(); } });
 
     /* بطاقات الهبوط (عرض فقط) */
     document.addEventListener('DOMContentLoaded', ()=>{
@@ -725,15 +756,24 @@
       window.addMessage = (chat,text,sender)=>{ originalAdd(chat,text,sender); autoScroll(chat); showBtn(chat); };
     })();
 
-    /* تهيئة أولية */
+    /* التهيئة الأولية — إصلاح: تحقّق companyData قبل القفز للوحة */
     document.addEventListener('DOMContentLoaded', ()=>{
       const robotsGrid=document.getElementById('robots-grid');
-      if(localStorage.getItem('companyData')){
+
+      // تحقق صارم من companyData
+      let stored = localStorage.getItem('companyData');
+      let valid = false;
+      try {
+        const obj = JSON.parse(stored || 'null');
+        valid = obj && typeof obj === 'object' && !!obj.name && !!obj.industry;
+      } catch(_) {}
+
+      if(valid){
         mainContent.classList.add('hidden');
         document.getElementById('dashboard-container').classList.remove('hidden');
         renderRobotList(); renderConversationsList();
       } else if (robotsGrid && !robotsGrid.children.length){
-        // تمت تعبئتها أعلاه
+        // تمت تعبئتها أعلاه — وسيتم فتح شاشة الإعداد بعد تسجيل الدخول
       }
     });
   </script>
