@@ -1,23 +1,19 @@
 /*! @file netlify/functions/chat.js
  *  @version 1.1.0
  *  @updated 2025-09-24
- *  واجهة آمنة لـ Gemini مع:
- *   - تخصيص "الشخصية" وسياق الشركة
- *   - دمج توجيهات الخبراء من ai-directives.json عبر directives-loader.js
- *   - دعم مرفقات (inlineData)
- *   - Auto-Profiler لاستخلاص ذاكرة منظمة من الحوار
- *   - Router متعدد النماذج + إعادة المحاولة
- *   - كشف لغة المستخدم (عربي/إنجليزي) والرد بها تلقائياً
+ *  واجهة آمنة لـ Gemini مع تخصيص "الشخصية" وسياق الشركة + دعم مرفقات + كشف لغة المستخدم
+ *  ملاحظة: تم دمج directives-loader لبناء توجيهات احترافية باللغة المطابقة للمستخدم
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { withCORS, jsonResponse, safeParse } from "./_utils.js";
+/* جديد: استدعاء مُنشئ توجيهات الشخصيات */
 import { buildPersonaPrompt } from "./directives-loader.js";
 
-/** الموديل الافتراضي (يمكن تغييره من متغير بيئة) */
+/** الموديل الافتراضي (قابل للتعديل عبر البيئة) */
 const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-1.5-flash";
 
-/** إعدادات التوليد (قابلة للضبط من البيئة) */
+/** إعدادات التوليد (تُضبط من الملحق بالأسفل إن وُجدت بيئة) */
 const generationConfig = {
   temperature: 0.6,
   topK: 32,
@@ -25,29 +21,6 @@ const generationConfig = {
   maxOutputTokens: 1024,
 };
 
-/** أدوات مساعدة صغيرة */
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-function detectLangFromHeaders(headers = {}) {
-  const raw = headers["accept-language"] || headers["Accept-Language"] || "";
-  const h = String(raw).toLowerCase();
-  if (/^ar\b|arabic|sa|eg|ae|ma|jo|kw|qa|bh|om/.test(h)) return "ar";
-  if (/en\b|english/.test(h)) return "en";
-  return "ar"; // افتراضي عربي لواجهة عربية
-}
-function coalesceLang(meta = {}, headers = {}) {
-  const m = (meta.lang || meta.locale || "").toString().slice(0, 2).toLowerCase();
-  if (m === "ar" || m === "en") return m;
-  return detectLangFromHeaders(headers);
-}
-/** findLast polyfill بسيط لدعم بيئات Node أقدم */
-function findLastUserTurn(contents) {
-  for (let i = contents.length - 1; i >= 0; i--) {
-    if (contents[i]?.role === "user") return contents[i];
-  }
-  return null;
-}
-
-/** المُعالج الرئيسي */
 export const handler = withCORS(async (event) => {
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { error: "Method Not Allowed" });
@@ -59,45 +32,45 @@ export const handler = withCORS(async (event) => {
     return jsonResponse(500, { error: "GEMINI_API_KEY is not configured" });
   }
 
-  // نقرأ الـ payload بأمان
   const {
     messages = [],
     persona = "",
     company = {},
     files = [],
-    meta = {}
+    meta = {}       // اختياري: userId, locale, tz, channel, intent...
   } = safeParse(event.body, {});
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return jsonResponse(400, { error: "messages[] is required" });
   }
 
-  // تحديد اللغة (ar/en) من meta أو من ترويسة المتصفح
-  const lang = coalesceLang(meta, event.headers || {});
-  const enrichedMeta = { ...meta, lang };
+  /* 1) كشف لغة المستخدم من سجل الرسائل مع احترام meta.locale إن وُجد */
+  const userLang = detectUserLanguage(messages, meta);
+  /* 2) بناء توجيهات احترافية للشخصية من ملف ai-directives.json، مع ضبط اللغة */
+  const personaPrompt = buildPersonaPrompt(persona, userLang);
 
-  // بناء "طبقة التوجيهات الاحترافية" من ai-directives.json
-  // هذه الطبقة تجعل كل روبوت يتصرف كخبير، ويبدأ بحوار استقصائي قبل الحل.
-  const expertDirectives = buildPersonaPrompt(persona || "مستشار", lang);
-
-  // بناء System Prompt موجز (وسم حالة فقط)، ثم نضيف expertDirectives كمحفّز أعلى الحوار
-  const systemPrompt = buildSystemHint(persona, company, enrichedMeta);
-
-  // تحويل الرسائل لصيغة Gemini (roles: user/model)
+  /** تكوين contents كما يريد Gemini:
+   *  أدوار: "user" و "model" (نحوّل assistant => model)
+   */
   const contents = [];
 
-  // (1) نضيف "hints" النظامية الصغيرة كمستخدم
-  contents.push({ role: "user", parts: [{ text: systemPrompt }] });
+  // نبدأ برسالة تعريفية (موجزة) تُخبر النموذج بالسياق + اللغة المطلوبة
+  contents.push({
+    role: "user",
+    parts: [{
+      text:
+        `${personaPrompt}\n` +
+        `[REPLY_LANG:${userLang}]  \n` +
+        `- استخدم نفس لغة المستخدم بالكامل في كل الردود (ar/en) اعتماداً على [REPLY_LANG].\n` +
+        `- إذا بدّل المستخدم اللغة لاحقاً فبدّل فوراً بدون تذكير.\n`
+    }],
+  });
 
-  // (2) نضيف "توجيهات الخبراء" المستخرجة من ai-directives.json
-  contents.push({ role: "user", parts: [{ text: expertDirectives }] });
-
-  // (3) باقي سجل المحادثة مع الحفاظ على الأدوار
+  // نضيف المحادثة السابقة
   for (const m of messages) {
     const role = m?.role === "assistant" ? "model" : "user";
     const text = typeof m?.text === "string" ? m.text : "";
     if (!text) continue;
-
     const last = contents[contents.length - 1];
     if (last && last.role === role) {
       last.parts.push({ text });
@@ -106,16 +79,18 @@ export const handler = withCORS(async (event) => {
     }
   }
 
-  // (4) دعم المرفقات (inlineData) — تُلحق بآخر دور "user"
+  // دعم مرفقات (inlineData)
   if (Array.isArray(files) && files.length) {
-    let target = findLastUserTurn(contents);
+    let target = contents.findLast?.((c) => c.role === "user");
     if (!target) {
       target = { role: "user", parts: [] };
       contents.push(target);
     }
     for (const f of files) {
       if (f?.mime && f?.base64) {
-        target.parts.push({ inlineData: { data: f.base64, mimeType: f.mime } });
+        target.parts.push({
+          inlineData: { data: f.base64, mimeType: f.mime },
+        });
       }
     }
   }
@@ -123,22 +98,22 @@ export const handler = withCORS(async (event) => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // === (أ) استدعاء الدردشة الأساسي (مع Router أسفل الملف) ===
+    // === استدعاء أساسي (مع Router أدناه) ===
     const model = genAI.getGenerativeModel({ model: MODEL_ID, generationConfig });
     const result = await model.generateContent({ contents });
     const text =
       (result?.response && typeof result.response.text === "function"
         ? result.response.text()
-        : null) || (lang === "ar" ? "لم يصل رد من النموذج." : "No response from the model.");
+        : null) || (userLang === "ar" ? "لم يصل رد من النموذج." : "No response from the model.");
 
-    // === (ب) Auto-Profiler لاستخراج patch من الحوار (JSON منظم) ===
+    // === Auto-Profiler: استخراج ذاكرة منظّمة من الحوار (JSON فقط) ===
     let memoryPatch = null;
     try {
       memoryPatch = await autoProfileFromConversation(genAI, {
         messages,
         persona,
         company,
-        meta: enrichedMeta
+        meta: { ...meta, lang: userLang }
       });
     } catch (e) {
       try { console.warn("⚠️ AutoProfiler failed:", e?.message || e); } catch {}
@@ -149,7 +124,7 @@ export const handler = withCORS(async (event) => {
     const status = err?.status || err?.code || 500;
     const message =
       err?.message?.toString?.() ||
-      (typeof err === "string" ? err : "Gemini request failed");
+      (typeof err === "string" ? err : (userLang === "ar" ? "فشل طلب Gemini" : "Gemini request failed"));
 
     try {
       console.error("❌ Gemini error:", status, message, {
@@ -164,7 +139,7 @@ export const handler = withCORS(async (event) => {
     return jsonResponse(
       typeof status === "number" ? status : 500,
       {
-        error: lang === "ar" ? "فشل طلب Gemini" : "Gemini request failed",
+        error: userLang === "ar" ? "فشل طلب Gemini" : "Gemini request failed",
         code: typeof status === "number" ? status : 500,
         details:
           process.env.NODE_ENV === "development" ? String(message) : undefined,
@@ -173,20 +148,35 @@ export const handler = withCORS(async (event) => {
   }
 });
 
-/** System hint صغير جداً: لا يفرض قوالب؛ يوسم السياق فقط */
-function buildSystemHint(persona = "", company = {}, meta = {}) {
-  const lang = meta?.lang || "ar";
-  const channel = meta?.channel ? `@${meta.channel}` : "";
-  const p = persona ? `(${persona})` : "";
-  const orgHint = company && Object.keys(company).length ? `|org` : "";
-  // تلميح موجز للنموذج كي يفهم السياق (لغة/قناة/شخصية/وجود شركة)
-  return `[context:${lang}${channel}] [mode:advisor${p}${orgHint}]`;
+/* =============================== Helpers =============================== */
+
+/** كشف لغة المستخدم ببساطة:
+ *  - أولوية meta.locale ("ar", "en", "ar-SA", "en-US"...)
+ *  - وإلا فحص آخر رسائل المستخدم: إذا احتوت على أحرف عربية → "ar" وإلا "en"
+ */
+function detectUserLanguage(messages = [], meta = {}) {
+  const loc = (meta?.locale || meta?.lang || "").toString().toLowerCase();
+  if (loc.startsWith("ar")) return "ar";
+  if (loc.startsWith("en")) return "en";
+
+  // ابحث من آخر رسالة للمستخدم باتجاه البداية
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m?.role === "user" && typeof m?.text === "string" && m.text) {
+      if (hasArabic(m.text)) return "ar";
+      return "en";
+    }
+  }
+  // افتراضي عربي لأن الواجهة عربية في الغالب
+  return "ar";
 }
 
-/* =============================== Auto-Profiler ===============================
-   يستنتج "ذاكرة" منظمة من الحوار نفسه ويعيد patch آمن.
-   لا يضيف نصوص جاهزة للمستخدم — JSON فقط.
-   -------------------------------------------------------------------------- */
+function hasArabic(s = "") {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(s);
+}
+
+/* =============================== Auto-Profiler =============================== */
+
 async function autoProfileFromConversation(genAI, { messages = [], persona = "", company = {}, meta = {} }) {
   const N = 16;
   const recent = messages.slice(-N).map(m => ({
@@ -247,7 +237,7 @@ function safeJson(s, fallback = "{}") {
 
 /* =======================================================================
    Gemini Power Add-on (Non-invasive)
-   Router متعدد النماذج + تحكم بالتكونات + إعادة المحاولة + تلميع خفيف
+   تعدد النماذج + تحكم بيئي + إعادة المحاولة + تلميع خفيف للنص
    ======================================================================= */
 
 import { GoogleGenerativeAI as __GGAI } from "@google/generative-ai";
@@ -273,11 +263,12 @@ try {
 } catch { /* تجاهل أخطاء التحويل */ }
 
 /* 2) أدوات الوثوقية */
+const __sleep = (ms) => new Promise(r => setTimeout(r, ms));
 async function __withRetry(fn, { tries = 2, baseDelay = 250 } = {}) {
   let lastErr;
   for (let i = 0; i < tries; i++) {
     try { return await fn(); }
-    catch (e) { lastErr = e; await sleep(baseDelay * Math.pow(2, i)); }
+    catch (e) { lastErr = e; await __sleep(baseDelay * Math.pow(2, i)); }
   }
   throw lastErr;
 }
@@ -295,7 +286,7 @@ function __polish(text = "") {
   return text.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/* 5) Router عبر Monkey-Patch للـ SDK */
+/* 5) Router غير تدخلي */
 const __origGet = __GGAI.prototype.getGenerativeModel;
 
 __GGAI.prototype.getGenerativeModel = function patchedGetGenerativeModel(opts = {}) {
@@ -334,11 +325,11 @@ __GGAI.prototype.getGenerativeModel = function patchedGetGenerativeModel(opts = 
   };
 };
 
-/* 6) تذكير ضبط البيئة (Netlify → Site settings → Environment)
-   - GEMINI_API_KEY=<your key>
-   - GEMINI_MODEL_ID=gemini-1.5-flash            (اختياري)
-   - G9_MODELS=gemini-1.5-pro,gemini-1.5-flash   (اختياري)
-   - G9_MAX_TOKENS=4096                          (أو حسب الحد)
+/* 6) تذكير بضبط البيئة (Netlify → Site settings → Environment)
+   - GEMINI_API_KEY=****** (مطلوب)
+   - GEMINI_MODEL_ID=gemini-1.5-flash (اختياري)
+   - G9_MODELS=gemini-1.5-pro,gemini-1.5-pro-exp-0827,gemini-1.5-flash,gemini-1.5-flash-8b
+   - G9_MAX_TOKENS=8192
    - G9_TEMP=0.35
    - G9_TOP_K=64
    - G9_TOP_P=0.95
