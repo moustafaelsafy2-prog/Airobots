@@ -1,35 +1,64 @@
 # ================================
-# إعدادات Netlify الأساسية
+# Netlify Configuration (Unified)
 # ================================
 
 [build]
-  publish = "public"              # مجلد ملفاتك الثابتة (index.html, admin.html ...)
-  functions = "netlify/functions" # مجلد وظائف Netlify
+  publish   = "public"              # مجلد الملفات الثابتة
+  functions = "netlify/functions"   # مجلد وظائف Netlify
 
 [functions]
-  directory = "netlify/functions"
+  directory           = "netlify/functions"
+  node_bundler        = "esbuild"
+  external_node_modules = ["@google/generative-ai"]
+  # تضمين الملفات التي تحتاجها الوظائف وقت التشغيل (قراءة/تحميل)
+  included_files = [
+    "public/ai-directives.json",
+    "netlify/functions/_utils.js",
+    "netlify/functions/directives-loader.js",
+    "netlify/functions/chat.js",
+    "users.json",
+    "users.js"
+  ]
 
 [build.environment]
-  NODE_VERSION = "20"             # نسخة Node.js مضمونة ومتوافقة مع Blobs API
+  NODE_VERSION = "20"               # نسخة Node متوافقة
+
+# (اختياري) إعدادات التطوير المحلي عبر netlify dev
+[dev]
+  command    = "npm run dev"
+  port       = 8888
+  autoLaunch = true
+  publish    = "public"
 
 # ================================
-# إعادة التوجيه (Redirects)
+# Redirects
 # ================================
 
-# اختصار رابط لوحة الأدمن
+# اختصار لوحة الأدمن
 [[redirects]]
-  from = "/admin"
-  to   = "/admin.html"
+  from   = "/admin"
+  to     = "/admin.html"
   status = 200
 
-# دعم Single Page App (اختياري، فعّل إذا أردت روابط داخلية بدون كسر الصفحة)
+# مسارات REST للوظائف
+[[redirects]]
+  from   = "/api/chat"
+  to     = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from   = "/api/directives"
+  to     = "/.netlify/functions/directives-loader"
+  status = 200
+
+# دعم SPA (اختياري — فعّل إذا لزم)
 # [[redirects]]
-#   from = "/*"
-#   to   = "/index.html"
+#   from   = "/*"
+#   to     = "/index.html"
 #   status = 200
 
 # ================================
-# الترويسات (Headers)
+# Headers
 # ================================
 
 # منع تخزين HTML في الكاش
@@ -38,11 +67,24 @@
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
 
-# تمكين CORS للوظائف (users.js)
+# تمكين CORS الشامل (صفحات وواجهات)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Cache-Control                = "no-store"
+    X-Content-Type-Options       = "nosniff"
+    X-Frame-Options              = "DENY"
+    Referrer-Policy              = "strict-origin-when-cross-origin"
+    Permissions-Policy           = "camera=(), microphone=(), geolocation=()"
+
+# CORS مخصص لوظيفة users (إن وُجدت)
 [[headers]]
   for = "/.netlify/functions/users"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type"
 
@@ -53,12 +95,16 @@
     Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
 
 # ================================
-# ترويسات أمنية (موصى بها)
+# Environment (Hints, no secrets here)
 # ================================
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+# لا نضع GEMINI_API_KEY هنا — سيُقرأ من Netlify Dashboard كما طلبت
+[template.environment]
+  GEMINI_MODEL_ID      = "gemini-1.5-flash"
+  G9_MODELS            = "gemini-1.5-pro,gemini-1.5-flash,gemini-1.5-flash-8b"
+  G9_TEMP              = "0.35"
+  G9_TOP_K             = "64"
+  G9_TOP_P             = "0.95"
+  G9_MAX_TOKENS        = "8192"
+  G9_EXTRACTOR_MODEL   = "gemini-1.5-pro"
+  G9_EXTRACTOR_TEMP    = "0.1"
+  G9_EXTRACTOR_TOKENS  = "512"
