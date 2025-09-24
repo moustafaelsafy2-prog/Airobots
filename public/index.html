@@ -1023,5 +1023,36 @@
 
   <!-- (مرة واحدة فقط) -->
   <script src="auth-bridge-global.js"></script>
+  <!-- ===== Patch: تعريض دوال الواجهة + ضمان تمرير اللغة إلى طبقة الذكاء الاصطناعي ===== -->
+<script>
+  (function () {
+    // تعريض دوال/متغيّرات يحتاجها الجسر (إن كانت معرفة داخل سكربت الصفحة)
+    try {
+      if (typeof currentPersona === "function") window.currentPersona = currentPersona;
+      if (typeof recentConversationFor === "function") window.recentConversationFor = recentConversationFor;
+      if (typeof inferIntent === "function") window.inferIntent = inferIntent;
+      if (typeof addMessage === "function") window.addMessage = addMessage;
+      if (typeof showDashboard === "function") window.showDashboard = showDashboard;
+      if (typeof startSetupChat === "function") window.startSetupChat = startSetupChat;
+    } catch {}
+
+    // تمرير اللغة لطبقة الذكاء الاصطناعي (يقرأها chat.js عبر meta.lang)
+    try {
+      const langFromDom = (document.documentElement.lang || "").slice(0,2).toLowerCase();
+      window.__ui_lang = (langFromDom === "ar" || langFromDom === "en")
+        ? langFromDom
+        : ((navigator.language || "ar").slice(0,2).toLowerCase());
+    } catch {}
+
+    // مستمعات اختيارية لحالات الدخول
+    document.addEventListener("user:login-success", () => {
+      // يمكن عرض Toast أو أي إشعار هنا إن رغبت
+    });
+    document.addEventListener("user:login-failed", () => {
+      // يمكن تتبع محاولات فاشلة هنا
+    });
+  })();
+</script>
+
 </body>
 </html>
