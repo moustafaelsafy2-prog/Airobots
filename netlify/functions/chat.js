@@ -1,60 +1,25 @@
 /*! @file netlify/functions/chat.js
- *  @version 2.0.0
+ *  @version 1.1.0
  *  @updated 2025-09-24
- *  واجهة آمنة لـ Gemini مع شخصية موجهة + ذاكرة تلقائية + دعم مرفقات (صور/ملفات) + كشف لغة
- *  تحسينات هذا الإصدار: تعدد النماذج الذكي، إعادة المحاولة 3 مرات، زمن انتظار أعلى، مخرجات أطول (8192 توكن)، تلميع أفضل.
+ *  واجهة آمنة لـ Gemini مع تخصيص "الشخصية" وسياق الشركة + دعم مرفقات + كشف لغة المستخدم
+ *  ملاحظة: تم دمج directives-loader لبناء توجيهات احترافية باللغة المطابقة للمستخدم
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { withCORS, jsonResponse, safeParse } from "./_utils.js";
+/* جديد: استدعاء مُنشئ توجيهات الشخصيات */
 import { buildPersonaPrompt } from "./directives-loader.js";
 
 /** الموديل الافتراضي (قابل للتعديل عبر البيئة) */
 const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-1.5-flash";
 
-/** إعدادات التوليد (يمكن ضبطها من البيئة) */
+/** إعدادات التوليد (تُضبط من الملحق بالأسفل إن وُجدت بيئة) */
 const generationConfig = {
-  temperature: Number(process.env.G9_TEMP ?? 0.35),
-  topK: Number(process.env.G9_TOP_K ?? 64),
-  topP: Number(process.env.G9_TOP_P ?? 0.95),
-  maxOutputTokens: Number(process.env.G9_MAX_TOKENS ?? 8192),
+  temperature: 0.6,
+  topK: 32,
+  topP: 0.95,
+  maxOutputTokens: 1024,
 };
-
-/** مصفوفة نماذج لمحرك الاختيار الذكي */
-const G9_MODELS = (process.env.G9_MODELS || [
-  "gemini-1.5-pro",
-  "gemini-1.5-pro-exp-0827",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-]).toString().split(",").map(s => s.trim()).filter(Boolean);
-
-/* أدوات الوثوقية */
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-async function withRetry(fn, { tries = 3, baseDelay = 300 } = {}) {
-  let lastErr;
-  for (let i = 0; i < tries; i++) {
-    try { return await fn(); }
-    catch (e) { lastErr = e; await sleep(baseDelay * Math.pow(2, i)); }
-  }
-  throw lastErr;
-}
-
-/* تقييم بسيط لاختيار أفضل مخرج بين النماذج */
-function score(text = "") {
-  const len = text.length;
-  const lines = (text.match(/\n/g) || []).length;
-  // وزن طفيف للطول + السطور (يميل إلى الردود الأكثر ثراء وتنظيماً)
-  return (len * 0.0008) + (lines * 0.5);
-}
-
-/* مُلمّع رقيق للمخرجات */
-function polish(text = "") {
-  if (!text) return text;
-  // دمج الفراغات وترك سطرين كحد أقصى بين الفقرات
-  return text.replace(/\n{3,}/g, "\n\n").trim();
-}
-
-/* =============================== Handlers =============================== */
 
 export const handler = withCORS(async (event) => {
   if (event.httpMethod !== "POST") {
@@ -72,52 +37,60 @@ export const handler = withCORS(async (event) => {
     persona = "",
     company = {},
     files = [],
-    meta = {},  // userId, locale, tz, channel, intent...
+    meta = {}       // اختياري: userId, locale, tz, channel, intent...
   } = safeParse(event.body, {});
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return jsonResponse(400, { error: "messages[] is required" });
   }
 
-  // 1) كشف لغة المستخدم
+  /* 1) كشف لغة المستخدم من سجل الرسائل مع احترام meta.locale إن وُجد */
   const userLang = detectUserLanguage(messages, meta);
-
-  // 2) بناء توجيهات احترافية للشخصية من ai-directives.json
+  /* 2) بناء توجيهات احترافية للشخصية من ملف ai-directives.json، مع ضبط اللغة */
   const personaPrompt = buildPersonaPrompt(persona, userLang);
 
-  // 3) تحويل المحادثة إلى contents كما يتوقع Gemini
+  /** تكوين contents كما يريد Gemini:
+   *  أدوار: "user" و "model" (نحوّل assistant => model)
+   */
   const contents = [];
 
-  // مقدمة ملزمة للسلوك واللغة
+  // نبدأ برسالة تعريفية (موجزة) تُخبر النموذج بالسياق + اللغة المطلوبة
   contents.push({
     role: "user",
     parts: [{
       text:
         `${personaPrompt}\n` +
         `[REPLY_LANG:${userLang}]  \n` +
-        `- استخدم نفس لغة المستخدم بالكامل (ar/en) وفق [REPLY_LANG].\n` +
-        `- التزم بالقواعد الصلبة (hard_rules) والأسئلة الاستقصائية أولاً عند الحاجة.\n` +
-        `- اربط التوصيات بمؤشرات قياس قابلة للتتبع.\n`
+        `- استخدم نفس لغة المستخدم بالكامل في كل الردود (ar/en) اعتماداً على [REPLY_LANG].\n` +
+        `- إذا بدّل المستخدم اللغة لاحقاً فبدّل فوراً بدون تذكير.\n`
     }],
   });
 
-  // نسخ الرسائل السابقة (تحويل assistant => model)
+  // نضيف المحادثة السابقة
   for (const m of messages) {
     const role = m?.role === "assistant" ? "model" : "user";
     const text = typeof m?.text === "string" ? m.text : "";
     if (!text) continue;
     const last = contents[contents.length - 1];
-    if (last && last.role === role) last.parts.push({ text });
-    else contents.push({ role, parts: [{ text }] });
+    if (last && last.role === role) {
+      last.parts.push({ text });
+    } else {
+      contents.push({ role, parts: [{ text }] });
+    }
   }
 
-  // دعم مرفقات (صور/ملفات) كـ inlineData
+  // دعم مرفقات (inlineData)
   if (Array.isArray(files) && files.length) {
-    let target = contents.findLast?.(c => c.role === "user");
-    if (!target) { target = { role: "user", parts: [] }; contents.push(target); }
+    let target = contents.findLast?.((c) => c.role === "user");
+    if (!target) {
+      target = { role: "user", parts: [] };
+      contents.push(target);
+    }
     for (const f of files) {
       if (f?.mime && f?.base64) {
-        target.parts.push({ inlineData: { data: f.base64, mimeType: f.mime } });
+        target.parts.push({
+          inlineData: { data: f.base64, mimeType: f.mime },
+        });
       }
     }
   }
@@ -125,37 +98,22 @@ export const handler = withCORS(async (event) => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // ===== Router: جرّب عدة نماذج واختر الأفضل =====
-    const results = [];
-    for (const mid of G9_MODELS.length ? G9_MODELS : [MODEL_ID]) {
-      const model = genAI.getGenerativeModel({ model: mid, generationConfig });
-      try {
-        const r = await withRetry(() => model.generateContent({ contents }), { tries: 3, baseDelay: 300 });
-        const candidate = (r?.response && typeof r.response.text === "function") ? r.response.text() : "";
-        if (candidate) results.push({ model: mid, text: candidate, score: score(candidate) });
-      } catch (e) {
-        try { console.warn("⚠️ Model failed:", mid, e?.message || e); } catch {}
-      }
-    }
+    // === استدعاء أساسي (مع Router أدناه) ===
+    const model = genAI.getGenerativeModel({ model: MODEL_ID, generationConfig });
+    const result = await model.generateContent({ contents });
+    const text =
+      (result?.response && typeof result.response.text === "function"
+        ? result.response.text()
+        : null) || (userLang === "ar" ? "لم يصل رد من النموذج." : "No response from the model.");
 
-    let text;
-    if (results.length === 0) {
-      // محاولة أخيرة بالموديل الأساسي
-      const fallback = genAI.getGenerativeModel({ model: MODEL_ID, generationConfig });
-      const r = await withRetry(() => fallback.generateContent({ contents }), { tries: 3, baseDelay: 400 });
-      text = (r?.response && typeof r.response.text === "function") ? r.response.text() : "";
-    } else {
-      results.sort((a, b) => b.score - a.score);
-      text = results[0].text;
-    }
-
-    text = polish(text || (userLang === "ar" ? "لم يصل رد من النموذج." : "No response from the model."));
-
-    // === Auto-Profiler: استخراج ذاكرة منظمة من الحوار (JSON فقط) ===
+    // === Auto-Profiler: استخراج ذاكرة منظّمة من الحوار (JSON فقط) ===
     let memoryPatch = null;
     try {
       memoryPatch = await autoProfileFromConversation(genAI, {
-        messages, persona, company, meta: { ...meta, lang: userLang }
+        messages,
+        persona,
+        company,
+        meta: { ...meta, lang: userLang }
       });
     } catch (e) {
       try { console.warn("⚠️ AutoProfiler failed:", e?.message || e); } catch {}
@@ -183,7 +141,8 @@ export const handler = withCORS(async (event) => {
       {
         error: userLang === "ar" ? "فشل طلب Gemini" : "Gemini request failed",
         code: typeof status === "number" ? status : 500,
-        details: process.env.NODE_ENV === "development" ? String(message) : undefined,
+        details:
+          process.env.NODE_ENV === "development" ? String(message) : undefined,
       }
     );
   }
@@ -191,23 +150,29 @@ export const handler = withCORS(async (event) => {
 
 /* =============================== Helpers =============================== */
 
-/** كشف لغة المستخدم:
- *  - أولوية meta.locale (ar/en)
- *  - وإلا نفحص آخر رسالة للمستخدم: حروف عربية => "ar" وإلا "en"
+/** كشف لغة المستخدم ببساطة:
+ *  - أولوية meta.locale ("ar", "en", "ar-SA", "en-US"...)
+ *  - وإلا فحص آخر رسائل المستخدم: إذا احتوت على أحرف عربية → "ar" وإلا "en"
  */
 function detectUserLanguage(messages = [], meta = {}) {
   const loc = (meta?.locale || meta?.lang || "").toString().toLowerCase();
   if (loc.startsWith("ar")) return "ar";
   if (loc.startsWith("en")) return "en";
 
+  // ابحث من آخر رسالة للمستخدم باتجاه البداية
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
     if (m?.role === "user" && typeof m?.text === "string" && m.text) {
-      if (/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(m.text)) return "ar";
+      if (hasArabic(m.text)) return "ar";
       return "en";
     }
   }
+  // افتراضي عربي لأن الواجهة عربية في الغالب
   return "ar";
+}
+
+function hasArabic(s = "") {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(s);
 }
 
 /* =============================== Auto-Profiler =============================== */
@@ -269,3 +234,106 @@ function safeJson(s, fallback = "{}") {
   try { return s && s.trim().startsWith("{") ? s : fallback; }
   catch { return fallback; }
 }
+
+/* =======================================================================
+   Gemini Power Add-on (Non-invasive)
+   تعدد النماذج + تحكم بيئي + إعادة المحاولة + تلميع خفيف للنص
+   ======================================================================= */
+
+import { GoogleGenerativeAI as __GGAI } from "@google/generative-ai";
+
+/* 1) التحكم من البيئة */
+const G9_MODELS = (process.env.G9_MODELS || [
+  "gemini-1.5-pro",
+  "gemini-1.5-pro-exp-0827",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b"
+]).toString().split(",").map(s => s.trim()).filter(Boolean);
+
+const G9_TEMP       = process.env.G9_TEMP;
+const G9_TOP_K      = process.env.G9_TOP_K;
+const G9_TOP_P      = process.env.G9_TOP_P;
+const G9_MAX_TOKENS = process.env.G9_MAX_TOKENS;
+
+try {
+  if (G9_TEMP !== undefined)       generationConfig.temperature     = Number(G9_TEMP);
+  if (G9_TOP_K !== undefined)      generationConfig.topK            = Number(G9_TOP_K);
+  if (G9_TOP_P !== undefined)      generationConfig.topP            = Number(G9_TOP_P);
+  if (G9_MAX_TOKENS !== undefined) generationConfig.maxOutputTokens = Number(G9_MAX_TOKENS);
+} catch { /* تجاهل أخطاء التحويل */ }
+
+/* 2) أدوات الوثوقية */
+const __sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function __withRetry(fn, { tries = 2, baseDelay = 250 } = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); }
+    catch (e) { lastErr = e; await __sleep(baseDelay * Math.pow(2, i)); }
+  }
+  throw lastErr;
+}
+
+/* 3) مُقيّم خفيف لاختيار أفضل مخرج */
+function __score(text = "") {
+  const len = text.length;
+  const lines = (text.match(/\n/g) || []).length;
+  return (len * 0.0008) + (lines * 0.5);
+}
+
+/* 4) مُلمّع رقيق */
+function __polish(text = "") {
+  if (!text) return text;
+  return text.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/* 5) Router غير تدخلي */
+const __origGet = __GGAI.prototype.getGenerativeModel;
+
+__GGAI.prototype.getGenerativeModel = function patchedGetGenerativeModel(opts = {}) {
+  const api = this;
+  const baseModelId = (opts && opts.model) || "gemini-1.5-flash";
+
+  if (!G9_MODELS || G9_MODELS.length <= 1) {
+    return __origGet.call(api, opts);
+  }
+
+  return {
+    async generateContent(payload) {
+      const results = [];
+      for (const mid of G9_MODELS) {
+        const m = __origGet.call(api, { ...opts, model: mid, generationConfig });
+        try {
+          const r = await __withRetry(() => m.generateContent(payload), { tries: 2, baseDelay: 250 });
+          const text = (r?.response && typeof r.response.text === "function") ? r.response.text() : "";
+          if (text) results.push({ model: mid, text, score: __score(text) });
+        } catch (e) {
+          try { console.warn("⚠️ Model failed:", mid, e?.message || e); } catch {}
+        }
+      }
+
+      if (results.length === 0) {
+        const fallback = __origGet.call(api, { ...opts, model: baseModelId, generationConfig });
+        const r = await __withRetry(() => fallback.generateContent(payload), { tries: 2, baseDelay: 300 });
+        const text = (r?.response && typeof r.response.text === "function") ? r.response.text() : "";
+        return { response: { text: () => __polish(text || "لم يصل رد من النموذج.") } };
+      }
+
+      results.sort((a, b) => b.score - a.score);
+      const best = results[0];
+      return { response: { text: () => __polish(best.text) } };
+    }
+  };
+};
+
+/* 6) تذكير بضبط البيئة (Netlify → Site settings → Environment)
+   - GEMINI_API_KEY=****** (مطلوب)
+   - GEMINI_MODEL_ID=gemini-1.5-flash (اختياري)
+   - G9_MODELS=gemini-1.5-pro,gemini-1.5-pro-exp-0827,gemini-1.5-flash,gemini-1.5-flash-8b
+   - G9_MAX_TOKENS=8192
+   - G9_TEMP=0.35
+   - G9_TOP_K=64
+   - G9_TOP_P=0.95
+   - (اختياري) G9_EXTRACTOR_MODEL=gemini-1.5-pro
+   - (اختياري) G9_EXTRACTOR_TEMP=0.1
+   - (اختياري) G9_EXTRACTOR_TOKENS=512
+*/
