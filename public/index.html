@@ -982,10 +982,11 @@
   <script src="auth-bridge-global.js"></script>
   <script>
 /* ============================================
-    Patch Add-on (non-invasive) for chat.js v1.0.2
+    Patch Add-on (non-invasive) for chat.js v1.1.0
     - company في المستوى الأعلى
     - حفظ memoryPatch في localStorage
     - رفع ملفات فعلي (Base64) وتمريرها للوظيفة
+    - تمرير لغة الواجهة meta.lang لضمان تطابق اللغة (ar/en)
     ============================================ */
 (() => {
   const NETLIFY_CHAT_ENDPOINT = "/.netlify/functions/chat";
@@ -1023,17 +1024,22 @@
 
   try { window.__origGeminiReply = window.geminiReply; } catch {}
 
-  // 🔧 إصلاح: إرسال {role,text} والملفات في حقل files العلوي
+  // 🔧 إرسال {role,text} والملفات في حقل files + تمرير meta.lang من واجهة المستخدم
   async function geminiReply_v2(userText, persona = "", files = []) {
     const company = JSON.parse(localStorage.getItem("companyData") || "{}");
     const history = getHistory(persona);
+    const langFromDom = (document.documentElement && document.documentElement.lang ? document.documentElement.lang : "").slice(0,2).toLowerCase();
+    const lang = (langFromDom === "ar" || langFromDom === "en")
+      ? langFromDom
+      : ((navigator.language || "ar").slice(0,2).toLowerCase());
 
     const body = {
       messages: [...history, { role: "user", text: userText }],
       persona,
       company,
       meta: {
-        intent: (typeof window.inferIntent === "function" ? window.inferIntent(userText) : "general")
+        intent: (typeof window.inferIntent === "function" ? window.inferIntent(userText) : "general"),
+        lang
       },
       files: Array.isArray(files) ? files.map(f => ({ mime: f.mime, base64: f.base64 })) : []
     };
@@ -1059,7 +1065,7 @@
       } catch {}
     }
 
-    return (data && data.text) ? data.text : "لم أستقبل ردًا من النموذج.";
+    return (data && data.text) ? data.text : (lang === "ar" ? "لم أستقبل ردًا من النموذج." : "No response from the model.");
   }
 
   window.geminiReply = geminiReply_v2;
