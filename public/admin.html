@@ -8,143 +8,67 @@
     :root { color-scheme: dark; }
     body {
       font-family: "Tajawal", sans-serif;
-      background: #111827;
-      color: #f9fafb;
-      margin: 0; padding: 0;
+      background: #111827; color: #f9fafb; margin: 0; padding: 0;
     }
-    header {
-      padding: 1rem 1.25rem;
-      background: #1f2937;
-      text-align: center;
-      border-bottom: 1px solid #374151;
-    }
+    header { padding: 1rem 1.25rem; background: #1f2937; text-align: center; border-bottom: 1px solid #374151; }
     .hidden { display: none !important; }
     .container { padding: 1rem 2rem; }
 
-    /* --- صندوق تسجيل الدخول --- */
+    /* صندوق تسجيل الدخول */
     #login-box {
-      max-width: 420px;
-      margin: 3rem auto;
-      padding: 2rem;
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      max-width: 420px; margin: 3rem auto; padding: 2rem; background: #1f2937;
+      border: 1px solid #374151; border-radius: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,.25);
     }
     #login-box h2 { margin: 0 0 1rem; }
     #login-box input {
-      width: 100%;
-      margin-bottom: 0.75rem;
-      padding: 0.6rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background:#0f172a;
-      color: #e5e7eb;
-      outline: none;
+      width: 100%; margin-bottom: 0.75rem; padding: 0.6rem 0.8rem; border-radius: 8px;
+      border: 1px solid #374151; background:#0f172a; color: #e5e7eb; outline: none;
     }
     #login-box input:focus { border-color:#2563eb; }
-    #login-box button {
-      padding: 0.6rem 1rem;
-      border: none;
-      background: #2563eb;
-      color: #fff;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-    }
+    #login-box button { padding: 0.6rem 1rem; border: none; background: #2563eb; color: #fff; border-radius: 8px; cursor: pointer; font-weight: 700; }
 
-    /* --- شريط الأدوات --- */
-    #toolbar {
-      margin: 12px 0 2px;
-      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    }
+    /* شريط الأدوات */
+    #toolbar { margin: 12px 0 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     #toolbar input, #toolbar select {
-      padding: .55rem .75rem;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      background:#0f172a; color:#e5e7eb;
-      outline: none;
+      padding: .55rem .75rem; border: 1px solid #374151; border-radius: 8px; background:#0f172a; color:#e5e7eb; outline: none;
     }
     #toolbar input:focus, #toolbar select:focus { border-color:#2563eb; }
-    .btn-primary {
-      background:#2563eb; color:#fff; border:none; border-radius:8px;
-      padding:.55rem .9rem; cursor:pointer; font-weight:700;
-    }
+    .btn-primary { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:.55rem .9rem; cursor:pointer; font-weight:700; }
 
-    /* --- الجدول --- */
+    /* الجدول */
     table {
-      width: 100%;
-      margin-top: 10px;
-      border-collapse: collapse;
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 10px;
-      overflow: hidden;
+      width: 100%; margin-top: 10px; border-collapse: collapse; background: #1f2937;
+      border: 1px solid #374151; border-radius: 10px; overflow: hidden;
     }
-    thead th {
-      background: #0b1220;
-      text-align: right;
-      padding: 0.8rem;
-      border-bottom: 1px solid #374151;
-      user-select: none;
-    }
-    tbody td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #2b3647;
-    }
+    thead th { background: #0b1220; text-align: right; padding: 0.8rem; border-bottom: 1px solid #374151; user-select: none; }
+    tbody td { padding: 0.75rem; border-bottom: 1px solid #2b3647; }
     th[data-sort] { cursor: pointer; }
     th[data-sort]:hover { color:#93c5fd; }
 
-    /* --- المودال --- */
-    #modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.65);
-      display: flex; justify-content: center; align-items: center;
-      z-index: 9990;
-    }
+    /* المودال */
+    #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; justify-content: center; align-items: center; z-index: 9990; }
     #modal-content {
-      background: #1f2937;
-      padding: 1.25rem 1.25rem 1rem;
-      border-radius: 12px;
-      border: 1px solid #374151;
-      width: 92%; max-width: 520px;
-      box-shadow: 0 20px 40px rgba(0,0,0,.35);
+      background: #1f2937; padding: 1.25rem 1.25rem 1rem; border-radius: 12px; border: 1px solid #374151;
+      width: 92%; max-width: 520px; box-shadow: 0 20px 40px rgba(0,0,0,.35);
     }
     #modal-content h3 { margin: .25rem 0 1rem; }
     #modal-content input {
-      width: 100%;
-      margin-bottom: 0.75rem;
-      padding: 0.6rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background:#0f172a;
-      color: #e5e7eb;
-      outline: none;
+      width: 100%; margin-bottom: 0.75rem; padding: 0.6rem 0.8rem; border-radius: 8px;
+      border: 1px solid #374151; background:#0f172a; color: #e5e7eb; outline: none;
     }
     #modal-actions { text-align: left; }
-    #modal-content button {
-      padding: 0.55rem .9rem;
-      border: none; border-radius: 8px; margin-inline-start: .5rem;
-      cursor: pointer; font-weight:700;
-    }
+    #modal-content button { padding: 0.55rem .9rem; border: none; border-radius: 8px; margin-inline-start: .5rem; cursor: pointer; font-weight:700; }
     .btn-danger { background:#dc2626; color:#fff; }
     .btn-ghost { background:#374151; color:#fff; }
 
-    /* --- Toast --- */
-    #toasts { position: fixed; bottom: 16px; left: 16px;
-      display:flex; flex-direction:column; gap:8px; z-index: 10000; }
+    /* Toast */
+    #toasts { position: fixed; bottom: 16px; left: 16px; display:flex; flex-direction:column; gap:8px; z-index: 10000; }
     .toast {
-      background:#0b1220; color:#fff; border:1px solid #374151;
-      padding:.6rem .9rem; border-radius:10px;
-      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      background:#0b1220; color:#fff; border:1px solid #374151; padding:.6rem .9rem; border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.35);
       animation:slidein .18s ease-out;
     }
-    @keyframes slidein {
-      from { transform: translateY(8px); opacity:.6 } to { transform:none; opacity:1 }
-    }
+    @keyframes slidein { from { transform: translateY(8px); opacity:.6 } to { transform:none; opacity:1 } }
 
-    /* أزرار الإجراءات داخل الجدول */
     .row-actions button { margin-inline-start: 6px; }
   </style>
 </head>
@@ -193,7 +117,7 @@
   </div>
 
   <!-- نافذة إضافة/تعديل -->
-  <div id="modal" class="hidden">
+  <div id="modal" class="hidden" data-edit-id="">
     <div id="modal-content" role="dialog" aria-modal="true">
       <h3 id="modal-title">إضافة مستخدم</h3>
       <input type="text" id="m_username" placeholder="اسم المستخدم"/>
@@ -210,9 +134,9 @@
   <!-- حاوية Toast -->
   <div id="toasts"></div>
 
-  <!-- ====================== المنطق الأساسي ====================== -->
+  <!-- ====================== المنطق الأساسي (مع مُعرّف ثابت لكل مستخدم) ====================== -->
   <script>
-    // ---- بيانات اعتماد الأدمن المحلية (واجهية فقط)
+    // بيانات اعتماد الأدمن (واجهية)
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "Admin@2025";
 
@@ -230,54 +154,60 @@
         adminPanel.classList.remove("hidden");
         renderUsers();      // العرض الأولي
         initEnhancements(); // الترتيب/التصفية/التصدير
-
-        // اطلب إعادة رسم محسّنة فورًا لو كانت متاحة
-        if (typeof window.__renderUsersEnhanced === "function") {
-          window.__renderUsersEnhanced();
-        }
+        if (typeof window.__renderUsersEnhanced === "function") window.__renderUsersEnhanced();
       } else {
         loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
       }
     });
 
-    // ---- إدارة المستخدمين بالمتصفح (LocalStorage) ----
-    let editingIndex = null;
-    const modal      = document.getElementById("modal");
-    const addBtn     = document.getElementById("add-user-btn");
-    const saveBtn    = document.getElementById("save-user");
-    const cancelBtn  = document.getElementById("cancel-user");
-    const tableBody  = document.querySelector("#users-table tbody");
+    // أدوات عامة
+    const genId = () => "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 
     function getUsers() {
-      return JSON.parse(localStorage.getItem("app_users") || "[]");
+      const list = JSON.parse(localStorage.getItem("app_users") || "[]");
+      // ترقية البيانات القديمة: إضافة id إن لم يوجد
+      let changed = false;
+      const upgraded = list.map(u => {
+        if (!u.id) { changed = true; return { id: genId(), ...u }; }
+        return u;
+      });
+      if (changed) localStorage.setItem("app_users", JSON.stringify(upgraded));
+      return upgraded;
     }
+
     function setUsers(users) {
       localStorage.setItem("app_users", JSON.stringify(users));
     }
 
+    // عرض الجدول الأساسي
+    const tableBody  = document.querySelector("#users-table tbody");
     function renderUsers() {
       const users = getUsers();
       tableBody.innerHTML = "";
-      users.forEach((user, i) => {
+      users.forEach((user) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${user.username}</td>
           <td>${user.email || ""}</td>
           <td>${user.role || "مستخدم"}</td>
           <td class="row-actions">
-            <button class="btn-ghost" onclick="editUser(${i})">✏️ تعديل</button>
-            <button class="btn-ghost" onclick="deleteUser(${i})">🗑️ حذف</button>
+            <button class="btn-ghost" onclick="editUserById('${user.id}')">✏️ تعديل</button>
+            <button class="btn-ghost" onclick="deleteUserById('${user.id}')">🗑️ حذف</button>
           </td>
         `;
         tableBody.appendChild(tr);
       });
-
-      // (اختياري) بثّ حدث عام عند كل إعادة رسم أساسية
       try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     }
 
+    // فتح المودال للإضافة
+    const modal      = document.getElementById("modal");
+    const addBtn     = document.getElementById("add-user-btn");
+    const saveBtn    = document.getElementById("save-user");
+    const cancelBtn  = document.getElementById("cancel-user");
+
     addBtn.addEventListener("click", () => {
-      editingIndex = null;
+      modal.dataset.editId = ""; // وضع إضافة
       document.getElementById("modal-title").textContent = "إضافة مستخدم";
       document.getElementById("m_username").value = "";
       document.getElementById("m_email").value = "";
@@ -288,73 +218,82 @@
 
     cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
+    // حفظ (إضافة/تعديل) — بالاعتماد على data-edit-id
     saveBtn.addEventListener("click", () => {
       const username = document.getElementById("m_username").value.trim();
       const email    = document.getElementById("m_email").value.trim();
       const pass     = document.getElementById("m_pass").value;
       const role     = document.getElementById("m_role").value.trim() || "مستخدم";
 
-      if (!username || !pass) {
-        alert("⚠️ يجب إدخال اسم المستخدم وكلمة المرور");
-        return;
-      }
+      if (!username || !pass) { alert("⚠️ يجب إدخال اسم المستخدم وكلمة المرور"); return; }
 
       const users = getUsers();
+      const editId = modal.dataset.editId;
 
-      // منع التكرار بالاسم عند الإضافة فقط
-      if (editingIndex === null) {
+      if (editId) {
+        // تحديث حسب id
+        const idx = users.findIndex(u => u.id === editId);
+        if (idx === -1) { alert("تعذر العثور على المستخدم للتعديل."); return; }
+        users[idx] = { ...users[idx], username, email, pass, role };
+      } else {
+        // إضافة جديدة (مع منع تكرار الاسم)
         const exists = users.some(u => String(u.username).trim() === username);
         if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
-        users.push({ username, email, pass, role });
-      } else {
-        users[editingIndex] = { username, email, pass, role };
+        users.push({ id: genId(), username, email, pass, role });
       }
 
       setUsers(users);
       modal.classList.add("hidden");
       renderUsers();
-
-      // ✅ بثّ حدث تغيّر بيانات ليتم التقاطه من طبقة التحسينات
+      modal.dataset.editId = ""; // تنظيف الحالة
       try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     });
 
-    window.editUser = function(i) {
-      editingIndex = i;
-      const user = getUsers()[i];
+    // دوال عامة للتعديل/الحذف باستخدام id (مفضلة)
+    window.editUserById = function(id) {
+      const user = getUsers().find(u => u.id === id);
+      if (!user) return;
+      modal.dataset.editId = id;
       document.getElementById("modal-title").textContent = "تعديل مستخدم";
       document.getElementById("m_username").value = user.username || "";
       document.getElementById("m_email").value    = user.email || "";
       document.getElementById("m_pass").value     = user.pass || "";
       document.getElementById("m_role").value     = user.role || "مستخدم";
       modal.classList.remove("hidden");
-    }
+    };
 
-    window.deleteUser = function(i) {
+    window.deleteUserById = function(id) {
       if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
-      const users = getUsers();
-      users.splice(i, 1);
+      const users = getUsers().filter(u => u.id !== id);
       setUsers(users);
       renderUsers();
-
-      // ✅ بثّ حدث تغيّر بيانات بعد الحذف
       try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
-    }
+    };
+
+    // توافق خلفي: لو نُودي عليها بمؤشر (من كود قديم)، حوّل المؤشر إلى id ثم استدعِ الدوال الجديدة
+    window.editUser = function(i) {
+      const users = getUsers();
+      const u = users[i];
+      if (u) window.editUserById(u.id);
+    };
+    window.deleteUser = function(i) {
+      const users = getUsers();
+      const u = users[i];
+      if (u) window.deleteUserById(u.id);
+    };
   </script>
 
-  <!-- ====================== طبقة التحسينات (إضافات غير مكسّرة) ====================== -->
+  <!-- ====================== طبقة التحسينات ====================== -->
   <script>
     function initEnhancements() {
       (function () {
-        // حالة العرض
         let STATE = { q:"", role:"", sortKey:"", sortDir:"asc" };
         const $ = (s, r=document) => r.querySelector(s);
         const $$ = (s, r=document) => [...r.querySelectorAll(s)];
         const debounce = (fn, ms=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-        // Toast
         function toast(msg, type="ok") {
-          const box = $("#toasts");
-          if (!box) return;
+          const box = $("#toasts"); if (!box) return;
           const el = document.createElement("div");
           el.className = "toast";
           el.style.borderColor = type==="err" ? "#dc2626" : "#10b981";
@@ -367,37 +306,21 @@
           const users = (typeof getUsers === "function" ? getUsers() : []);
           const q = STATE.q.trim().toLowerCase();
           const role = STATE.role.trim();
-
           let out = users.filter(u => {
             const inRole = !role || (String(u.role||"").trim()===role);
             if (!q) return inRole;
             const hay = [u.username, u.email, u.role].map(v => String(v||"").toLowerCase()).join(" ");
             return inRole && hay.includes(q);
           });
-
           if (STATE.sortKey) {
-            const k = STATE.sortKey;
-            const dir = STATE.sortDir === "asc" ? 1 : -1;
+            const k = STATE.sortKey; const dir = STATE.sortDir === "asc" ? 1 : -1;
             out.sort((a,b)=> (String(a[k]||"").localeCompare(String(b[k]||""))) * dir);
           }
           return out;
         }
 
-        function findIndexById(uobj) {
-          const list = (typeof getUsers === "function" ? getUsers() : []);
-          const idx = list.findIndex(u =>
-            (u === uobj) ||
-            (String(u.username||"")===String(uobj.username||"") &&
-             String(u.email||"")   ===String(uobj.email||"") &&
-             String(u.role||"")    ===String(uobj.role||""))
-          );
-          return idx < 0 ? 0 : idx;
-        }
-
         function renderUsersEnhanced() {
-          // استدعاء الرسم الأصلي لتزامن التخزين/العرض
-          if (typeof renderUsers === "function") renderUsers();
-
+          if (typeof renderUsers === "function") renderUsers(); // تزامن
           const tbody = document.querySelector("#users-table tbody");
           if (!tbody) return;
           const data = getFilteredSortedUsers();
@@ -405,31 +328,30 @@
           tbody.innerHTML = "";
           data.forEach((user) => {
             const tr = document.createElement("tr");
-            const baseIndex = findIndexById(user);
             tr.innerHTML = `
               <td>${user.username || ""}</td>
               <td>${user.email || ""}</td>
               <td>${user.role || "مستخدم"}</td>
               <td class="row-actions">
-                <button class="btn-ghost" data-edit="${baseIndex}">✏️ تعديل</button>
-                <button class="btn-ghost" data-del="${baseIndex}">🗑️ حذف</button>
+                <button class="btn-ghost" data-edit-id="${user.id}">✏️ تعديل</button>
+                <button class="btn-ghost" data-del-id="${user.id}">🗑️ حذف</button>
               </td>
             `;
             tbody.appendChild(tr);
           });
 
-          // أربط الأزرار بالدوال العالمية الموجودة في السكربت الأساسي
-          tbody.querySelectorAll("[data-edit]").forEach(btn => {
+          // أربط بالأصناف الجديدة المعتمدة على id (مستقرة)
+          tbody.querySelectorAll("[data-edit-id]").forEach(btn => {
             btn.addEventListener("click", () => {
-              if (typeof window.editUser === "function") {
-                window.editUser(Number(btn.getAttribute("data-edit")));
+              if (typeof window.editUserById === "function") {
+                window.editUserById(btn.getAttribute("data-edit-id"));
               }
             });
           });
-          tbody.querySelectorAll("[data-del]").forEach(btn => {
+          tbody.querySelectorAll("[data-del-id]").forEach(btn => {
             btn.addEventListener("click", () => {
-              if (typeof window.deleteUser === "function") {
-                window.deleteUser(Number(btn.getAttribute("data-del")));
+              if (typeof window.deleteUserById === "function") {
+                window.deleteUserById(btn.getAttribute("data-del-id"));
               }
             });
           });
@@ -470,19 +392,12 @@
               STATE.sortDir = (STATE.sortKey === key && STATE.sortDir === "asc") ? "desc" : "asc";
               STATE.sortKey = key;
               $$("#users-table thead th").forEach(h => h.innerText = h.innerText.replace(/[\s▲▼]+$/,""));
-              th.innerText = th.innerText.replace(/[\s▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
+              th.innerText = th.innerText.replace(/[\س▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
               renderUsersEnhanced();
             });
           });
 
-          if (ex) ex.addEventListener("click", ()=>{
-            const rows = getFilteredSortedUsers();
-            if (!rows.length) { toast("لا توجد بيانات لتصديرها","err"); return; }
-            download("users.csv", toCSV(rows));
-            toast("تم تصدير CSV");
-          });
-
-          // راقب setUsers لتُعيد الرسم وتعرض Toast
+          // راقب setUsers لإظهار Toast وإعادة الرسم
           const _setUsers = window.setUsers;
           if (typeof _setUsers === "function") {
             window.setUsers = function(u) {
@@ -493,13 +408,9 @@
           }
         }
 
-        // اجعل دالة إعادة الرسم المحسّنة مُتاحة عالميًا، واستمع لتغيّر البيانات
         window.__renderUsersEnhanced = renderUsersEnhanced;
-        window.addEventListener("users:changed", () => {
-          renderUsersEnhanced();
-        });
+        window.addEventListener("users:changed", () => { renderUsersEnhanced(); });
 
-        // تفعيل عند ظهور لوحة الأدمن
         const adminPanel = document.getElementById("admin-panel");
         if (!adminPanel) return;
         wireControls();
@@ -507,7 +418,6 @@
       })();
     }
 
-    // في حالة فتح الصفحة واللوحة غير مخفية (سيناريو تطوير)
     document.addEventListener("DOMContentLoaded", ()=>{
       if (!document.getElementById("admin-panel").classList.contains("hidden")) {
         initEnhancements();
@@ -515,7 +425,7 @@
     });
   </script>
 
-  <!-- إن كان لديك مزامنة خارجية لاحقًا (يبقى كما هو، لا يؤثر) -->
+  <!-- مزامنة خارجية (إن وجدت لاحقًا) -->
   <script src="admin-sync.js"></script>
 </body>
 </html>
