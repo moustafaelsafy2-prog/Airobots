@@ -6,10 +6,7 @@
   <title>لوحة الأدمن — إدارة المستخدمين</title>
   <style>
     :root { color-scheme: dark; }
-    body {
-      font-family: "Tajawal", sans-serif;
-      background: #111827; color: #f9fafb; margin: 0; padding: 0;
-    }
+    body { font-family: "Tajawal", sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 0; }
     header { padding: 1rem 1.25rem; background: #1f2937; text-align: center; border-bottom: 1px solid #374151; }
     .hidden { display: none !important; }
     .container { padding: 1rem 2rem; }
@@ -34,6 +31,7 @@
     }
     #toolbar input:focus, #toolbar select:focus { border-color:#2563eb; }
     .btn-primary { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:.55rem .9rem; cursor:pointer; font-weight:700; }
+    .btn-ghost { background:#374151; color:#fff; border:none; border-radius:8px; padding:.45rem .7rem; cursor:pointer; font-weight:700; }
 
     /* الجدول */
     table {
@@ -59,7 +57,6 @@
     #modal-actions { text-align: left; }
     #modal-content button { padding: 0.55rem .9rem; border: none; border-radius: 8px; margin-inline-start: .5rem; cursor: pointer; font-weight:700; }
     .btn-danger { background:#dc2626; color:#fff; }
-    .btn-ghost { background:#374151; color:#fff; }
 
     /* Toast */
     #toasts { position: fixed; bottom: 16px; left: 16px; display:flex; flex-direction:column; gap:8px; z-index: 10000; }
@@ -117,9 +114,11 @@
   </div>
 
   <!-- نافذة إضافة/تعديل -->
-  <div id="modal" class="hidden" data-edit-id="">
+  <div id="modal" class="hidden">
     <div id="modal-content" role="dialog" aria-modal="true">
       <h3 id="modal-title">إضافة مستخدم</h3>
+      <!-- مُعرّف ثابت خفي لضمان التعديل على نفس السجل -->
+      <input type="hidden" id="m_id" />
       <input type="text" id="m_username" placeholder="اسم المستخدم"/>
       <input type="email" id="m_email" placeholder="البريد"/>
       <input type="password" id="m_pass" placeholder="كلمة المرور"/>
@@ -134,13 +133,13 @@
   <!-- حاوية Toast -->
   <div id="toasts"></div>
 
-  <!-- ====================== المنطق الأساسي (مع مُعرّف ثابت لكل مستخدم) ====================== -->
+  <!-- ====================== المنطق الأساسي (id ثابت + حفظ حسب id) ====================== -->
   <script>
-    // بيانات اعتماد الأدمن (واجهية)
+    /* اعتماد الأدمن (واجهية فقط) */
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "Admin@2025";
 
-    // عناصر
+    /* عناصر عامة */
     const loginBox   = document.getElementById("login-box");
     const adminPanel = document.getElementById("admin-panel");
     const loginBtn   = document.getElementById("login-btn");
@@ -152,35 +151,39 @@
       if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
         loginBox.classList.add("hidden");
         adminPanel.classList.remove("hidden");
-        renderUsers();      // العرض الأولي
-        initEnhancements(); // الترتيب/التصفية/التصدير
+        renderUsers();
+        initEnhancements();
         if (typeof window.__renderUsersEnhanced === "function") window.__renderUsersEnhanced();
       } else {
         loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
       }
     });
 
-    // أدوات عامة
+    /* توليد id ثابت */
     const genId = () => "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 
+    /* تخزين محلي */
     function getUsers() {
       const list = JSON.parse(localStorage.getItem("app_users") || "[]");
-      // ترقية البيانات القديمة: إضافة id إن لم يوجد
+      // ترقية بيانات قديمة بلا id لمرة واحدة
       let changed = false;
-      const upgraded = list.map(u => {
-        if (!u.id) { changed = true; return { id: genId(), ...u }; }
-        return u;
-      });
+      const upgraded = list.map(u => u && u.id ? u : (changed = true, { id: genId(), ...u }));
       if (changed) localStorage.setItem("app_users", JSON.stringify(upgraded));
       return upgraded;
     }
-
     function setUsers(users) {
       localStorage.setItem("app_users", JSON.stringify(users));
+      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     }
 
-    // عرض الجدول الأساسي
+    /* عناصر الجدول والمودال */
     const tableBody  = document.querySelector("#users-table tbody");
+    const modal      = document.getElementById("modal");
+    const addBtn     = document.getElementById("add-user-btn");
+    const saveBtn    = document.getElementById("save-user");
+    const cancelBtn  = document.getElementById("cancel-user");
+
+    /* عرض أساسي للجدول (يوفر أزرار بـ data-id) */
     function renderUsers() {
       const users = getUsers();
       tableBody.innerHTML = "";
@@ -191,24 +194,30 @@
           <td>${user.email || ""}</td>
           <td>${user.role || "مستخدم"}</td>
           <td class="row-actions">
-            <button class="btn-ghost" onclick="editUserById('${user.id}')">✏️ تعديل</button>
-            <button class="btn-ghost" onclick="deleteUserById('${user.id}')">🗑️ حذف</button>
+            <button class="btn-ghost" data-edit-id="${user.id}">✏️ تعديل</button>
+            <button class="btn-ghost" data-del-id="${user.id}">🗑️ حذف</button>
           </td>
         `;
         tableBody.appendChild(tr);
       });
-      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
+      // تفويض أحداث الإجراءات
+      bindRowActions();
     }
 
-    // فتح المودال للإضافة
-    const modal      = document.getElementById("modal");
-    const addBtn     = document.getElementById("add-user-btn");
-    const saveBtn    = document.getElementById("save-user");
-    const cancelBtn  = document.getElementById("cancel-user");
+    /* تفويض نقرات التعديل/الحذف لضمان الاستقرار بعد أي إعادة رسم */
+    function bindRowActions() {
+      tableBody.onclick = (e) => {
+        const editBtn = e.target.closest("[data-edit-id]");
+        const delBtn  = e.target.closest("[data-del-id]");
+        if (editBtn) editUserById(editBtn.getAttribute("data-edit-id"));
+        if (delBtn)  deleteUserById(delBtn.getAttribute("data-del-id"));
+      };
+    }
 
+    /* فتح المودال للإضافة */
     addBtn.addEventListener("click", () => {
-      modal.dataset.editId = ""; // وضع إضافة
       document.getElementById("modal-title").textContent = "إضافة مستخدم";
+      document.getElementById("m_id").value = ""; // إضافة جديدة
       document.getElementById("m_username").value = "";
       document.getElementById("m_email").value = "";
       document.getElementById("m_pass").value = "";
@@ -216,27 +225,29 @@
       modal.classList.remove("hidden");
     });
 
+    /* إلغاء/إغلاق المودال */
     cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
-    // حفظ (إضافة/تعديل) — بالاعتماد على data-edit-id
+    /* حفظ (تعديل/إضافة) — القرار حسب وجود m_id */
     saveBtn.addEventListener("click", () => {
+      const id       = (document.getElementById("m_id").value || "").trim();
       const username = document.getElementById("m_username").value.trim();
       const email    = document.getElementById("m_email").value.trim();
       const pass     = document.getElementById("m_pass").value;
-      const role     = document.getElementById("m_role").value.trim() || "مستخدم";
+      const role     = (document.getElementById("m_role").value || "مستخدم").trim();
 
       if (!username || !pass) { alert("⚠️ يجب إدخال اسم المستخدم وكلمة المرور"); return; }
 
       const users = getUsers();
-      const editId = modal.dataset.editId;
 
-      if (editId) {
-        // تحديث حسب id
-        const idx = users.findIndex(u => u.id === editId);
+      if (id) {
+        // تعديل حسب id
+        const idx = users.findIndex(u => u.id === id);
         if (idx === -1) { alert("تعذر العثور على المستخدم للتعديل."); return; }
+        // السماح بتكرار الاسم إذا نفس السجل
         users[idx] = { ...users[idx], username, email, pass, role };
       } else {
-        // إضافة جديدة (مع منع تكرار الاسم)
+        // إضافة جديدة (مع منع تكرار الاسم على مستوى القاعدة)
         const exists = users.some(u => String(u.username).trim() === username);
         if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
         users.push({ id: genId(), username, email, pass, role });
@@ -245,45 +256,34 @@
       setUsers(users);
       modal.classList.add("hidden");
       renderUsers();
-      modal.dataset.editId = ""; // تنظيف الحالة
-      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     });
 
-    // دوال عامة للتعديل/الحذف باستخدام id (مفضلة)
-    window.editUserById = function(id) {
+    /* دوال عامة باستخدام id (جذر المشكلة) */
+    function editUserById(id) {
       const user = getUsers().find(u => u.id === id);
       if (!user) return;
-      modal.dataset.editId = id;
       document.getElementById("modal-title").textContent = "تعديل مستخدم";
+      document.getElementById("m_id").value       = user.id;       // << المفتاح
       document.getElementById("m_username").value = user.username || "";
       document.getElementById("m_email").value    = user.email || "";
       document.getElementById("m_pass").value     = user.pass || "";
       document.getElementById("m_role").value     = user.role || "مستخدم";
       modal.classList.remove("hidden");
-    };
+    }
 
-    window.deleteUserById = function(id) {
+    function deleteUserById(id) {
       if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
       const users = getUsers().filter(u => u.id !== id);
       setUsers(users);
       renderUsers();
-      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
-    };
+    }
 
-    // توافق خلفي: لو نُودي عليها بمؤشر (من كود قديم)، حوّل المؤشر إلى id ثم استدعِ الدوال الجديدة
-    window.editUser = function(i) {
-      const users = getUsers();
-      const u = users[i];
-      if (u) window.editUserById(u.id);
-    };
-    window.deleteUser = function(i) {
-      const users = getUsers();
-      const u = users[i];
-      if (u) window.deleteUserById(u.id);
-    };
+    // توافق خلفي لو كان هناك استدعاء قديم بالمؤشر (لن يكسّر شيئًا)
+    window.editUser = function(i) { const u = getUsers()[i]; if (u) editUserById(u.id); };
+    window.deleteUser = function(i) { const u = getUsers()[i]; if (u) deleteUserById(u.id); };
   </script>
 
-  <!-- ====================== طبقة التحسينات ====================== -->
+  <!-- ====================== طبقة التحسينات (فرز/بحث/CSV وتحديث فوري) ====================== -->
   <script>
     function initEnhancements() {
       (function () {
@@ -299,7 +299,7 @@
           el.style.borderColor = type==="err" ? "#dc2626" : "#10b981";
           el.textContent = msg;
           box.appendChild(el);
-          setTimeout(()=> el.remove(), 2800);
+          setTimeout(()=> el.remove(), 2400);
         }
 
         function getFilteredSortedUsers() {
@@ -320,11 +320,10 @@
         }
 
         function renderUsersEnhanced() {
-          if (typeof renderUsers === "function") renderUsers(); // تزامن
+          // إعادة بناء tbody بالكامل من البيانات المُصفّاة/المُرتّبة
           const tbody = document.querySelector("#users-table tbody");
           if (!tbody) return;
           const data = getFilteredSortedUsers();
-
           tbody.innerHTML = "";
           data.forEach((user) => {
             const tr = document.createElement("tr");
@@ -339,22 +338,8 @@
             `;
             tbody.appendChild(tr);
           });
-
-          // أربط بالأصناف الجديدة المعتمدة على id (مستقرة)
-          tbody.querySelectorAll("[data-edit-id]").forEach(btn => {
-            btn.addEventListener("click", () => {
-              if (typeof window.editUserById === "function") {
-                window.editUserById(btn.getAttribute("data-edit-id"));
-              }
-            });
-          });
-          tbody.querySelectorAll("[data-del-id]").forEach(btn => {
-            btn.addEventListener("click", () => {
-              if (typeof window.deleteUserById === "function") {
-                window.deleteUserById(btn.getAttribute("data-del-id"));
-              }
-            });
-          });
+          // إعادة ربط التفويض بعد إعادة الرسم
+          if (typeof window.bindRowActions === "function") window.bindRowActions();
 
           const c = document.getElementById("resultsCount");
           if (c) c.textContent = `النتائج: ${data.length}`;
@@ -380,7 +365,7 @@
 
           if (q) q.addEventListener("input", debounce((e)=>{
             STATE.q = e.target.value; renderUsersEnhanced();
-          }, 300));
+          }, 200));
 
           if (rf) rf.addEventListener("change", (e)=>{
             STATE.role = e.target.value; renderUsersEnhanced();
@@ -392,12 +377,12 @@
               STATE.sortDir = (STATE.sortKey === key && STATE.sortDir === "asc") ? "desc" : "asc";
               STATE.sortKey = key;
               $$("#users-table thead th").forEach(h => h.innerText = h.innerText.replace(/[\s▲▼]+$/,""));
-              th.innerText = th.innerText.replace(/[\س▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
+              th.innerText = th.innerText.replace(/[\s▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
               renderUsersEnhanced();
             });
           });
 
-          // راقب setUsers لإظهار Toast وإعادة الرسم
+          // راقب setUsers لإظهار Toast وإعادة الرسم فورًا
           const _setUsers = window.setUsers;
           if (typeof _setUsers === "function") {
             window.setUsers = function(u) {
@@ -408,16 +393,19 @@
           }
         }
 
+        // API داخلي لندائه بعد أول renderUsers
         window.__renderUsersEnhanced = renderUsersEnhanced;
-        window.addEventListener("users:changed", () => { renderUsersEnhanced(); });
 
-        const adminPanel = document.getElementById("admin-panel");
-        if (!adminPanel) return;
+        // أي تغيير بيانات يطلق إعادة رسم فورية
+        window.addEventListener("users:changed", renderUsersEnhanced);
+
+        // تفعيل
         wireControls();
         renderUsersEnhanced();
       })();
     }
 
+    // في حال كانت اللوحة ظاهرة (سيناريو تطوير)
     document.addEventListener("DOMContentLoaded", ()=>{
       if (!document.getElementById("admin-panel").classList.contains("hidden")) {
         initEnhancements();
@@ -425,7 +413,7 @@
     });
   </script>
 
-  <!-- مزامنة خارجية (إن وجدت لاحقًا) -->
+  <!-- إن كان لديك مزامنة خارجية لاحقًا -->
   <script src="admin-sync.js"></script>
 </body>
 </html>
