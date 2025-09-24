@@ -141,7 +141,7 @@
               <p class="text-gray-400">جميع التحديثات المستقبلية والمساعدين الجدد مجاناً.</p>
             </div>
             <div class="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
-              <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8ل-9 9z"/></svg>
+              <svg class="icon-svg mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
               <h4 class="text-2xl font-bold text-white">حل متكامل</h4>
               <p class="text-gray-400">وداعاً للتبديل بين التطبيقات، فريق العون الذكي هو كل ما تحتاجه في مكان واحد.</p>
             </div>
@@ -189,7 +189,7 @@
       <section class="py-20">
         <div class="container mx-auto px-4 text-center">
           <h3 class="text-4xl font-bold mb-4 text-white">ماذا يقول عملاؤنا؟</h3>
-          <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">قصص نجاح حقيقية من أشخاص وشركات حول العالم.</p>
+        <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">قصص نجاح حقيقية من أشخاص وشركات حول العالم.</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="card p-8 text-left">
               <p class="text-lg text-gray-300 mb-4">"فريق العون الذكي غير قواعد اللعبة بالنسبة لشركتنا."</p>
@@ -435,7 +435,7 @@
     closeModal.addEventListener('click', ()=> loginModal.style.display='none');
     window.addEventListener('click', (e)=>{ if(e.target === loginModal) loginModal.style.display='none'; });
 
-    /* تسجيل الدخول */
+    /* تسجيل الدخول — تحقّق من صلاحية companyData قبل القفز للوحة */
     submitLogin.addEventListener('click', ()=>{
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
@@ -443,7 +443,23 @@
         loginMessage.textContent = 'تم تسجيل الدخول بنجاح!'; loginMessage.style.color = '#10b981';
         setTimeout(()=>{
           loginModal.style.display='none';
-          if(localStorage.getItem('companyData')){ showDashboard(); } else { startSetupChat(); }
+
+          // التحقق الصارم من companyData (اسم + صناعة على الأقل)
+          let stored = localStorage.getItem('companyData');
+          let valid = false;
+          try {
+            const obj = JSON.parse(stored || 'null');
+            valid = obj && typeof obj === 'object' && !!obj.name && !!obj.industry;
+          } catch(_) {}
+
+          if (valid) { 
+            showDashboard(); 
+          } else { 
+            // تنظيف أي بيانات تالفة ثم فتح شاشة الإعداد
+            localStorage.removeItem('companyData');
+            setupChatState = 0; companyData = {};
+            startSetupChat(); 
+          }
         },800);
       } else {
         loginMessage.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة.'; loginMessage.style.color = '#ef4444';
@@ -462,7 +478,10 @@
     function startSetupChat(){
       mainContent.classList.add('hidden'); mainHeader.classList.add('hidden');
       scrollWrapper.classList.add('hidden'); mainFooter.classList.add('hidden');
+      // ضمان الظهور والتنظيف قبل أول رسالة
       setupChatInterface.style.display='flex';
+      setupChatInterface.style.zIndex='120';
+      setupChatMessages.innerHTML='';
       addMessage(setupChatMessages, setupPrompts[setupChatState].text, 'ai');
     }
     setupChatSendBtn.addEventListener('click', handleSetupChatInput);
@@ -725,15 +744,24 @@
       window.addMessage = (chat,text,sender)=>{ originalAdd(chat,text,sender); autoScroll(chat); showBtn(chat); };
     })();
 
-    /* تهيئة أولية */
+    /* التهيئة الأولية — تحقّق companyData قبل القفز للوحة */
     document.addEventListener('DOMContentLoaded', ()=>{
       const robotsGrid=document.getElementById('robots-grid');
-      if(localStorage.getItem('companyData')){
+
+      // تحقق صارم من companyData
+      let stored = localStorage.getItem('companyData');
+      let valid = false;
+      try {
+        const obj = JSON.parse(stored || 'null');
+        valid = obj && typeof obj === 'object' && !!obj.name && !!obj.industry;
+      } catch(_) {}
+
+      if(valid){
         mainContent.classList.add('hidden');
         document.getElementById('dashboard-container').classList.remove('hidden');
         renderRobotList(); renderConversationsList();
       } else if (robotsGrid && !robotsGrid.children.length){
-        // تمت تعبئتها أعلاه
+        // تمت تعبئتها أعلاه — وسيتم فتح شاشة الإعداد بعد تسجيل الدخول
       }
     });
   </script>
