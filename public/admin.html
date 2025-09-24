@@ -144,6 +144,7 @@
       from { transform: translateY(8px); opacity:.6 } to { transform:none; opacity:1 }
     }
 
+    /* أزرار الإجراءات داخل الجدول */
     .row-actions button { margin-inline-start: 6px; }
   </style>
 </head>
@@ -206,14 +207,12 @@
     </div>
   </div>
 
+  <!-- حاوية Toast -->
   <div id="toasts"></div>
 
-  <!-- ====================== المنطق الأساسي + مزامنة Netlify ====================== -->
+  <!-- ====================== المنطق الأساسي ====================== -->
   <script>
-    // اعتماد واجهة عربية ثابتة
-    document.documentElement.lang = "ar";
-    document.documentElement.dir  = "rtl";
-
+    // ---- بيانات اعتماد الأدمن المحلية (واجهية فقط)
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "Admin@2025";
 
@@ -223,154 +222,61 @@
     const loginBtn   = document.getElementById("login-btn");
     const loginMsg   = document.getElementById("login-msg");
 
-    // عناصر لوحة
-    const addBtn     = document.getElementById("add-user-btn");
-    const saveBtn    = document.getElementById("save-user");
-    const cancelBtn  = document.getElementById("cancel-user");
-    const modal      = document.getElementById("modal");
-    const tableBody  = document.querySelector("#users-table tbody");
-
-    let editingIndex = null;
-
-    // ================== طبقة تخاطب قابلة للتبديل (Netlify <-> Local) ==================
-    const API_BASE = "/.netlify/functions/users";
-    let USE_REMOTE = null; // يحدد لاحقاً بعد فحص الصحة
-
-    async function pingRemote() {
-      try {
-        const r = await fetch(API_BASE, { method: "OPTIONS" });
-        return r.ok || r.status === 204;
-      } catch { return false; }
-    }
-
-    function toast(msg, ok=true) {
-      const box = document.getElementById("toasts");
-      const el = document.createElement("div");
-      el.className = "toast";
-      el.style.borderColor = ok ? "#10b981" : "#dc2626";
-      el.textContent = msg;
-      box.appendChild(el);
-      setTimeout(()=> el.remove(), 2800);
-    }
-
-    // -------- Local storage backend --------
-    function ls_getUsers() {
-      return JSON.parse(localStorage.getItem("app_users") || "[]");
-    }
-    function ls_setUsers(users) {
-      localStorage.setItem("app_users", JSON.stringify(users));
-    }
-
-    // -------- Remote (Netlify) backend --------
-    async function api_list() {
-      const r = await fetch(API_BASE, { headers: { "Accept":"application/json" }});
-      if (!r.ok) throw new Error("فشل جلب المستخدمين");
-      return await r.json();
-    }
-    async function api_create(user) {
-      const r = await fetch(API_BASE, {
-        method:"POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(user)
-      });
-      if (!r.ok) throw new Error("فشل إضافة المستخدم");
-      return await r.json();
-    }
-    async function api_update(user) {
-      const r = await fetch(API_BASE, {
-        method:"PUT",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(user)
-      });
-      if (!r.ok) throw new Error("فشل تعديل المستخدم");
-      return await r.json();
-    }
-    async function api_delete(username) {
-      const r = await fetch(API_BASE + "?username=" + encodeURIComponent(username), { method:"DELETE" });
-      if (!r.ok) throw new Error("فشل حذف المستخدم");
-      return true;
-    }
-
-    // طبقة موحّدة
-    async function ds_list() {
-      if (USE_REMOTE) return await api_list();
-      return ls_getUsers();
-    }
-    async function ds_create(user) {
-      if (USE_REMOTE) return await api_create(user);
-      const users = ls_getUsers();
-      users.push(user);
-      ls_setUsers(users);
-      return user;
-    }
-    async function ds_update(user, originalUsername) {
-      if (USE_REMOTE) return await api_update({ ...user, originalUsername });
-      const users = ls_getUsers();
-      const idx = users.findIndex(u => String(u.username) === String(originalUsername));
-      if (idx >= 0) users[idx] = user;
-      ls_setUsers(users);
-      return user;
-    }
-    async function ds_delete(username) {
-      if (USE_REMOTE) return await api_delete(username);
-      const users = ls_getUsers().filter(u => String(u.username) !== String(username));
-      ls_setUsers(users);
-      return true;
-    }
-
-    // ================== auth ==================
-    loginBtn.addEventListener("click", async () => {
+    loginBtn.addEventListener("click", () => {
       const u = document.getElementById("admin-user").value.trim();
       const p = document.getElementById("admin-pass").value;
       if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
-        // تحديد وضع التخزين مرة واحدة بعد تسجيل الدخول
-        if (USE_REMOTE === null) {
-          USE_REMOTE = await pingRemote();
-          toast(USE_REMOTE ? "تم الاتصال بمخزن Netlify" : "وضع محلي (LocalStorage)");
-        }
         loginBox.classList.add("hidden");
         adminPanel.classList.remove("hidden");
         renderUsers();      // العرض الأولي
         initEnhancements(); // الترتيب/التصفية/التصدير
+
+        // اطلب إعادة رسم محسّنة فورًا لو كانت متاحة
+        if (typeof window.__renderUsersEnhanced === "function") {
+          window.__renderUsersEnhanced();
+        }
       } else {
         loginMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة";
       }
     });
 
-    // ================== CRUD (واجهة) ==================
-    function getRowUsersCache() { return ls_getUsers(); } // للعثور على الفهارس فقط في الوضع المحلي
+    // ---- إدارة المستخدمين بالمتصفح (LocalStorage) ----
+    let editingIndex = null;
+    const modal      = document.getElementById("modal");
+    const addBtn     = document.getElementById("add-user-btn");
+    const saveBtn    = document.getElementById("save-user");
+    const cancelBtn  = document.getElementById("cancel-user");
+    const tableBody  = document.querySelector("#users-table tbody");
 
-    async function renderUsers() {
-      try {
-        const users = await ds_list();
-        tableBody.innerHTML = "";
-        users.forEach((user, i) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${user.username || ""}</td>
-            <td>${user.email || ""}</td>
-            <td>${user.role || "مستخدم"}</td>
-            <td class="row-actions">
-              <button class="btn-ghost" data-edit="${user.username}">✏️ تعديل</button>
-              <button class="btn-ghost" data-del="${user.username}">🗑️ حذف</button>
-            </td>
-          `;
-          tableBody.appendChild(tr);
-        });
-
-        // ربط الأزرار
-        tableBody.querySelectorAll("[data-edit]").forEach(btn => {
-          btn.addEventListener("click", () => openEdit(btn.getAttribute("data-edit")));
-        });
-        tableBody.querySelectorAll("[data-del]").forEach(btn => {
-          btn.addEventListener("click", () => delUser(btn.getAttribute("data-del")));
-        });
-      } catch (e) {
-        toast(e.message || "تعذر تحميل المستخدمين", false);
-      }
+    function getUsers() {
+      return JSON.parse(localStorage.getItem("app_users") || "[]");
+    }
+    function setUsers(users) {
+      localStorage.setItem("app_users", JSON.stringify(users));
     }
 
-    function openAdd() {
+    function renderUsers() {
+      const users = getUsers();
+      tableBody.innerHTML = "";
+      users.forEach((user, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.email || ""}</td>
+          <td>${user.role || "مستخدم"}</td>
+          <td class="row-actions">
+            <button class="btn-ghost" onclick="editUser(${i})">✏️ تعديل</button>
+            <button class="btn-ghost" onclick="deleteUser(${i})">🗑️ حذف</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // (اختياري) بثّ حدث عام عند كل إعادة رسم أساسية
+      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
+    }
+
+    addBtn.addEventListener("click", () => {
       editingIndex = null;
       document.getElementById("modal-title").textContent = "إضافة مستخدم";
       document.getElementById("m_username").value = "";
@@ -378,22 +284,11 @@
       document.getElementById("m_pass").value = "";
       document.getElementById("m_role").value = "مستخدم";
       modal.classList.remove("hidden");
-    }
+    });
 
-    async function openEdit(username) {
-      const users = await ds_list();
-      const user = users.find(u => String(u.username) === String(username));
-      if (!user) return;
-      editingIndex = username; // نخزن الاسم الأصلي للمطابقة
-      document.getElementById("modal-title").textContent = "تعديل مستخدم";
-      document.getElementById("m_username").value = user.username || "";
-      document.getElementById("m_email").value    = user.email || "";
-      document.getElementById("m_pass").value     = user.pass || "";
-      document.getElementById("m_role").value     = user.role || "مستخدم";
-      modal.classList.remove("hidden");
-    }
+    cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
-    async function saveUser() {
+    saveBtn.addEventListener("click", () => {
       const username = document.getElementById("m_username").value.trim();
       const email    = document.getElementById("m_email").value.trim();
       const pass     = document.getElementById("m_pass").value;
@@ -404,80 +299,72 @@
         return;
       }
 
-      try {
-        const users = await ds_list();
-        if (editingIndex === null) {
-          // منع التكرار بالاسم
-          const exists = users.some(u => String(u.username).trim() === username);
-          if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
-          await ds_create({ username, email, pass, role });
-          toast("تمت إضافة المستخدم");
-        } else {
-          const originalUsername = editingIndex;
-          await ds_update({ username, email, pass, role }, originalUsername);
-          toast("تم تعديل المستخدم");
-        }
-        modal.classList.add("hidden");
-        renderUsers();
-      } catch (e) {
-        toast(e.message || "تعذر الحفظ", false);
+      const users = getUsers();
+
+      // منع التكرار بالاسم عند الإضافة فقط
+      if (editingIndex === null) {
+        const exists = users.some(u => String(u.username).trim() === username);
+        if (exists) { alert("⚠️ اسم المستخدم موجود مسبقًا"); return; }
+        users.push({ username, email, pass, role });
+      } else {
+        users[editingIndex] = { username, email, pass, role };
       }
+
+      setUsers(users);
+      modal.classList.add("hidden");
+      renderUsers();
+
+      // ✅ بثّ حدث تغيّر بيانات ليتم التقاطه من طبقة التحسينات
+      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
+    });
+
+    window.editUser = function(i) {
+      editingIndex = i;
+      const user = getUsers()[i];
+      document.getElementById("modal-title").textContent = "تعديل مستخدم";
+      document.getElementById("m_username").value = user.username || "";
+      document.getElementById("m_email").value    = user.email || "";
+      document.getElementById("m_pass").value     = user.pass || "";
+      document.getElementById("m_role").value     = user.role || "مستخدم";
+      modal.classList.remove("hidden");
     }
 
-    async function delUser(username) {
+    window.deleteUser = function(i) {
       if (!confirm("هل تريد حذف هذا المستخدم؟")) return;
-      try {
-        await ds_delete(username);
-        toast("تم حذف المستخدم");
-        renderUsers();
-      } catch (e) {
-        toast(e.message || "تعذر الحذف", false);
-      }
+      const users = getUsers();
+      users.splice(i, 1);
+      setUsers(users);
+      renderUsers();
+
+      // ✅ بثّ حدث تغيّر بيانات بعد الحذف
+      try { window.dispatchEvent(new CustomEvent("users:changed")); } catch {}
     }
-
-    // أحداث المودال
-    addBtn.addEventListener("click", openAdd);
-    cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    saveBtn.addEventListener("click", saveUser);
-
-    // إتاحة دوال عند الحاجة (تصحيح أوامر قديمة)
-    window.editUser   = (i) => {}; // لم تعد مستخدمة (استبدلناها باسم المستخدم)
-    window.deleteUser = (i) => {}; // لم تعد مستخدمة
-
   </script>
 
-  <!-- ====================== طبقة التحسينات (فلتر/فرز/CSV) ====================== -->
+  <!-- ====================== طبقة التحسينات (إضافات غير مكسّرة) ====================== -->
   <script>
     function initEnhancements() {
       (function () {
+        // حالة العرض
         let STATE = { q:"", role:"", sortKey:"", sortDir:"asc" };
         const $ = (s, r=document) => r.querySelector(s);
         const $$ = (s, r=document) => [...r.querySelectorAll(s)];
         const debounce = (fn, ms=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
-        function toast(msg, ok=true) {
+        // Toast
+        function toast(msg, type="ok") {
           const box = $("#toasts");
           if (!box) return;
           const el = document.createElement("div");
           el.className = "toast";
-          el.style.borderColor = ok ? "#10b981" : "#dc2626";
+          el.style.borderColor = type==="err" ? "#dc2626" : "#10b981";
           el.textContent = msg;
           box.appendChild(el);
           setTimeout(()=> el.remove(), 2800);
         }
 
-        async function fetchAllUsers() {
-          // نعتمد على الدالة الموحدة في الملف الأساسي
-          if (typeof window.ds_list === "function") {
-            try { return await window.ds_list(); } catch { return []; }
-          }
-          return [];
-        }
-
-        function normalize(val) { return String(val || "").toLowerCase(); }
-
-        async function getFilteredSortedUsers() {
-          const users = await fetchAllUsers();
+        function getFilteredSortedUsers() {
+          const users = (typeof getUsers === "function" ? getUsers() : []);
           const q = STATE.q.trim().toLowerCase();
           const role = STATE.role.trim();
 
@@ -496,33 +383,55 @@
           return out;
         }
 
-        async function renderUsersEnhanced() {
-          // نعيد رسم الجدول يدويًا لنضمن احترام الفرز/الفلاتر
+        function findIndexById(uobj) {
+          const list = (typeof getUsers === "function" ? getUsers() : []);
+          const idx = list.findIndex(u =>
+            (u === uobj) ||
+            (String(u.username||"")===String(uobj.username||"") &&
+             String(u.email||"")   ===String(uobj.email||"") &&
+             String(u.role||"")    ===String(uobj.role||""))
+          );
+          return idx < 0 ? 0 : idx;
+        }
+
+        function renderUsersEnhanced() {
+          // استدعاء الرسم الأصلي لتزامن التخزين/العرض
+          if (typeof renderUsers === "function") renderUsers();
+
           const tbody = document.querySelector("#users-table tbody");
           if (!tbody) return;
-          const data = await getFilteredSortedUsers();
+          const data = getFilteredSortedUsers();
 
           tbody.innerHTML = "";
           data.forEach((user) => {
             const tr = document.createElement("tr");
+            const baseIndex = findIndexById(user);
             tr.innerHTML = `
               <td>${user.username || ""}</td>
               <td>${user.email || ""}</td>
               <td>${user.role || "مستخدم"}</td>
               <td class="row-actions">
-                <button class="btn-ghost" data-edit="${user.username}">✏️ تعديل</button>
-                <button class="btn-ghost" data-del="${user.username}">🗑️ حذف</button>
+                <button class="btn-ghost" data-edit="${baseIndex}">✏️ تعديل</button>
+                <button class="btn-ghost" data-del="${baseIndex}">🗑️ حذف</button>
               </td>
             `;
             tbody.appendChild(tr);
           });
 
-          // ربط أزرار الصفوف بعد الرسم
+          // أربط الأزرار بالدوال العالمية الموجودة في السكربت الأساسي
           tbody.querySelectorAll("[data-edit]").forEach(btn => {
-            btn.addEventListener("click", () => window.openEdit(btn.getAttribute("data-edit")));
+            btn.addEventListener("click", () => {
+              if (typeof window.editUser === "function") {
+                window.editUser(Number(btn.getAttribute("data-edit")));
+              }
+            });
           });
           tbody.querySelectorAll("[data-del]").forEach(btn => {
-            btn.addEventListener("click", () => window.delUser(btn.getAttribute("data-del")));
+            btn.addEventListener("click", () => {
+              if (typeof window.deleteUser === "function") {
+                window.deleteUser(Number(btn.getAttribute("data-del")));
+              }
+            });
           });
 
           const c = document.getElementById("resultsCount");
@@ -547,43 +456,58 @@
           const rf  = $("#roleFilter");
           const ex  = $("#exportCsv");
 
-          if (q) q.addEventListener("input", debounce(async (e)=>{
-            STATE.q = e.target.value; await renderUsersEnhanced();
-          }, 250));
+          if (q) q.addEventListener("input", debounce((e)=>{
+            STATE.q = e.target.value; renderUsersEnhanced();
+          }, 300));
 
-          if (rf) rf.addEventListener("change", async (e)=>{
-            STATE.role = e.target.value; await renderUsersEnhanced();
+          if (rf) rf.addEventListener("change", (e)=>{
+            STATE.role = e.target.value; renderUsersEnhanced();
           });
 
           $$("#users-table thead th[data-sort]").forEach((th)=>{
-            th.addEventListener("click", async ()=>{
+            th.addEventListener("click", ()=>{
               const key = th.getAttribute("data-sort");
               STATE.sortDir = (STATE.sortKey === key && STATE.sortDir === "asc") ? "desc" : "asc";
               STATE.sortKey = key;
               $$("#users-table thead th").forEach(h => h.innerText = h.innerText.replace(/[\s▲▼]+$/,""));
               th.innerText = th.innerText.replace(/[\s▲▼]+$/,"") + (STATE.sortDir === "asc" ? " ▲" : " ▼");
-              await renderUsersEnhanced();
+              renderUsersEnhanced();
             });
           });
 
-          if (ex) ex.addEventListener("click", async ()=>{
-            const rows = await getFilteredSortedUsers();
-            if (!rows.length) { toast("لا توجد بيانات لتصديرها",false); return; }
+          if (ex) ex.addEventListener("click", ()=>{
+            const rows = getFilteredSortedUsers();
+            if (!rows.length) { toast("لا توجد بيانات لتصديرها","err"); return; }
             download("users.csv", toCSV(rows));
             toast("تم تصدير CSV");
           });
+
+          // راقب setUsers لتُعيد الرسم وتعرض Toast
+          const _setUsers = window.setUsers;
+          if (typeof _setUsers === "function") {
+            window.setUsers = function(u) {
+              _setUsers(u);
+              toast("تم الحفظ بنجاح");
+              renderUsersEnhanced();
+            }
+          }
         }
 
-        // كشف دوال مطلوبة للطبقة الأساسية
-        window.openEdit = async (u)=>{ await (typeof window.openEdit === "function" ? window.openEdit(u) : null); };
-        window.delUser  = async (u)=>{ await (typeof window.delUser  === "function" ? window.delUser(u)  : null); };
+        // اجعل دالة إعادة الرسم المحسّنة مُتاحة عالميًا، واستمع لتغيّر البيانات
+        window.__renderUsersEnhanced = renderUsersEnhanced;
+        window.addEventListener("users:changed", () => {
+          renderUsersEnhanced();
+        });
 
+        // تفعيل عند ظهور لوحة الأدمن
+        const adminPanel = document.getElementById("admin-panel");
+        if (!adminPanel) return;
         wireControls();
         renderUsersEnhanced();
       })();
     }
 
-    // في حالة فتح الصفحة مباشرة واللوحة ظاهرة (تطوير)
+    // في حالة فتح الصفحة واللوحة غير مخفية (سيناريو تطوير)
     document.addEventListener("DOMContentLoaded", ()=>{
       if (!document.getElementById("admin-panel").classList.contains("hidden")) {
         initEnhancements();
@@ -591,7 +515,7 @@
     });
   </script>
 
-  <!-- إن كان لديك مزامنة خارجية لاحقًا -->
+  <!-- إن كان لديك مزامنة خارجية لاحقًا (يبقى كما هو، لا يؤثر) -->
   <script src="admin-sync.js"></script>
 </body>
 </html>
